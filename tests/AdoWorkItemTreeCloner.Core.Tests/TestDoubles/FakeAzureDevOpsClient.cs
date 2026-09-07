@@ -33,7 +33,7 @@ internal sealed class FakeAzureDevOpsClient : IAzureDevOpsClient
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        int newId = _nextId++;
+        var newId = _nextId++;
 
         CreateCalls.Add(
             new CreateCall(

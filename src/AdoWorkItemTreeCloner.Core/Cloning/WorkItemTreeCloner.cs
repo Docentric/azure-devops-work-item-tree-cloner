@@ -42,8 +42,8 @@ public sealed class WorkItemTreeCloner
                 "Root work item ID must be greater than zero.");
         }
 
-        HashSet<int> path = new HashSet<int>();
-        HashSet<int> seen = new HashSet<int>();
+        HashSet<int> path = [];
+        HashSet<int> seen = [];
         return LoadNodeAsync(rootId, path, seen, cancellationToken);
     }
 
@@ -59,7 +59,7 @@ public sealed class WorkItemTreeCloner
     {
         ArgumentNullException.ThrowIfNull(sourceRoot);
 
-        CloneResult result = new CloneResult();
+        var result = new CloneResult();
         result.RootNewId = await CloneNodeAsync(
                 sourceRoot,
                 parentNewId: null,
@@ -78,7 +78,7 @@ public sealed class WorkItemTreeCloner
             return null;
         }
 
-        return value is JsonValue jsonValue && jsonValue.TryGetValue<string>(out string? text)
+        return value is JsonValue jsonValue && jsonValue.TryGetValue<string>(out var text)
             ? text
             : Convert.ToString(value, CultureInfo.InvariantCulture);
     }
@@ -91,12 +91,12 @@ public sealed class WorkItemTreeCloner
             return null;
         }
 
-        string? lastSegment = relationUri.Segments.LastOrDefault()?.Trim('/');
+        var lastSegment = relationUri.Segments.LastOrDefault()?.Trim('/');
         return int.TryParse(
             lastSegment,
             NumberStyles.None,
             CultureInfo.InvariantCulture,
-            out int id)
+            out var id)
             ? id
             : null;
     }
@@ -127,7 +127,7 @@ public sealed class WorkItemTreeCloner
             JsonObject fields = json["fields"]?.AsObject()
                 ?? throw new AzureDevOpsException($"Work item {id} has no fields object.");
 
-            WorkItemNode node = new WorkItemNode
+            var node = new WorkItemNode
             {
                 Id = id,
                 WorkItemType = GetString(fields, "System.WorkItemType") ?? "Unknown",
@@ -151,7 +151,7 @@ public sealed class WorkItemTreeCloner
                     continue;
                 }
 
-                int? childId = ParseWorkItemId(relation["url"]?.GetValue<string>());
+                var childId = ParseWorkItemId(relation["url"]?.GetValue<string>());
                 if (childId is null)
                 {
                     continue;
@@ -178,7 +178,7 @@ public sealed class WorkItemTreeCloner
         CancellationToken cancellationToken)
     {
         IReadOnlyList<JsonObject> patch = WorkItemCreatePatchBuilder.Build(source, isRoot, _options);
-        int newId = await _client.CreateWorkItemAsync(
+        var newId = await _client.CreateWorkItemAsync(
                 source.WorkItemType,
                 patch,
                 _options.SuppressNotifications,

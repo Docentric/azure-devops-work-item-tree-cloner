@@ -50,7 +50,7 @@ public sealed class WorkItemCreatePatchBuilderTests
                 };
             });
 
-        CloneOptions options = new CloneOptions(
+        var options = new CloneOptions(
             titleSuffix: " - Clone",
             copyAreaPath: false,
             copyIterationPath: true,
@@ -86,7 +86,7 @@ public sealed class WorkItemCreatePatchBuilderTests
 
     private static WorkItemNode CreateNode(Action<JsonObject> configureFields)
     {
-        JsonObject fields = new JsonObject
+        var fields = new JsonObject
         {
             ["System.Title"] = "Root",
             ["System.WorkItemType"] = "Epic"

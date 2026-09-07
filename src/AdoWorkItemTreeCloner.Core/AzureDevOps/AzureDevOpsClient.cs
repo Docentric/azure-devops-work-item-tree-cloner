@@ -30,7 +30,7 @@ public sealed class AzureDevOpsClient : IAzureDevOpsClient, IDisposable
         ValidateRequiredValue(options.Project, nameof(options.Project));
         ValidateRequiredValue(options.PersonalAccessToken, nameof(options.PersonalAccessToken));
 
-        string organization = options.Organization.TrimEnd('/');
+        var organization = options.Organization.TrimEnd('/');
         if (!Uri.TryCreate($"{organization}/", UriKind.Absolute, out Uri? organizationBaseUri))
         {
             throw new ArgumentException("Organization must be an absolute URI.", nameof(options));
@@ -46,7 +46,7 @@ public sealed class AzureDevOpsClient : IAzureDevOpsClient, IDisposable
             ? new HttpClient()
             : new HttpClient(handler, disposeHandler: true);
 
-        string basicToken = Convert.ToBase64String(
+        var basicToken = Convert.ToBase64String(
             Encoding.ASCII.GetBytes($":{options.PersonalAccessToken}"));
 
         _httpClient.DefaultRequestHeaders.Authorization =
@@ -62,7 +62,7 @@ public sealed class AzureDevOpsClient : IAzureDevOpsClient, IDisposable
     {
         ValidateWorkItemId(id, nameof(id));
 
-        string relativeUri = $"_apis/wit/workitems/{id}?$expand=relations&api-version={ApiVersion}";
+        var relativeUri = $"_apis/wit/workitems/{id}?$expand=relations&api-version={ApiVersion}";
         return SendForJsonAsync(
             HttpMethod.Get,
             new Uri(_projectBaseUri, relativeUri),
@@ -80,12 +80,11 @@ public sealed class AzureDevOpsClient : IAzureDevOpsClient, IDisposable
         ValidateRequiredValue(workItemType, nameof(workItemType));
         ArgumentNullException.ThrowIfNull(patchOperations);
 
-        string encodedType = Uri.EscapeDataString(workItemType);
-        string notificationValue = suppressNotifications ? "true" : "false";
-        string relativeUri =
+        var encodedType = Uri.EscapeDataString(workItemType);
+        var notificationValue = suppressNotifications ? "true" : "false";
+        var relativeUri =
             $"_apis/wit/workitems/${encodedType}?suppressNotifications={notificationValue}&api-version={ApiVersion}";
-        JsonArray body = new JsonArray(
-            patchOperations.Select(static operation => operation.DeepClone()).ToArray());
+        JsonArray body = [.. patchOperations.Select(static operation => operation.DeepClone()).ToArray()];
 
         JsonObject response = await SendForJsonAsync(
                 HttpMethod.Post,
@@ -111,12 +110,12 @@ public sealed class AzureDevOpsClient : IAzureDevOpsClient, IDisposable
 
         // Work-item relation URLs are organization-scoped even when the update API call
         // itself is project-scoped.
-        string parentUrl = new Uri(
+        var parentUrl = new Uri(
             _organizationBaseUri,
             $"_apis/wit/workItems/{parentId}").AbsoluteUri;
 
-        JsonArray patch = new JsonArray
-        {
+        JsonArray patch =
+        [
             new JsonObject
             {
                 ["op"] = "add",
@@ -131,10 +130,10 @@ public sealed class AzureDevOpsClient : IAzureDevOpsClient, IDisposable
                     }
                 }
             }
-        };
+        ];
 
-        string notificationValue = suppressNotifications ? "true" : "false";
-        string relativeUri =
+        var notificationValue = suppressNotifications ? "true" : "false";
+        var relativeUri =
             $"_apis/wit/workitems/{childId}?suppressNotifications={notificationValue}&api-version={ApiVersion}";
 
         _ = await SendForJsonAsync(
@@ -214,11 +213,11 @@ public sealed class AzureDevOpsClient : IAzureDevOpsClient, IDisposable
         JsonNode? body,
         CancellationToken cancellationToken)
     {
-        string? serializedBody = body?.ToJsonString();
+        var serializedBody = body?.ToJsonString();
 
-        for (int attempt = 1; attempt <= MaximumAttempts; attempt++)
+        for (var attempt = 1; attempt <= MaximumAttempts; attempt++)
         {
-            using HttpRequestMessage request = new HttpRequestMessage(method, uri);
+            using var request = new HttpRequestMessage(method, uri);
             if (serializedBody is not null)
             {
                 request.Content = new StringContent(
@@ -230,7 +229,7 @@ public sealed class AzureDevOpsClient : IAzureDevOpsClient, IDisposable
             using HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken)
                 .ConfigureAwait(false);
 
-            string content = await response.Content.ReadAsStringAsync(cancellationToken)
+            var content = await response.Content.ReadAsStringAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)
@@ -252,7 +251,7 @@ public sealed class AzureDevOpsClient : IAzureDevOpsClient, IDisposable
                 continue;
             }
 
-            string message = TryGetErrorMessage(content) ?? content;
+            var message = TryGetErrorMessage(content) ?? content;
             throw new AzureDevOpsException(
                 $"{(int)response.StatusCode} {response.ReasonPhrase}: {message}".Trim());
         }

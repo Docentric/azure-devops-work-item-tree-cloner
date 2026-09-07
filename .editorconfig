@@ -48,6 +48,14 @@ csharp_style_prefer_primary_constructors = false:suggestion
 csharp_style_prefer_utf8_string_literals = true:suggestion
 csharp_prefer_simple_using_statement = true:warning
 csharp_prefer_braces = true:error
+
+# Spell checking
+[*.cs]
+spelling_languages = en-us
+spelling_checkable_types = identifiers,comments
+spelling_error_severity = warning
+spelling_exclusion_path = .config/spelling.dic
+spelling_use_default_exclusion_dictionary = false
 csharp_preserve_single_line_blocks = true
 csharp_preserve_single_line_statements = false
 

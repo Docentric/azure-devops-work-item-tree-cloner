@@ -10,11 +10,11 @@ internal static class ConsoleRenderer
 {
     public static void RenderBanner()
     {
-        Assembly assembly = Assembly.GetExecutingAssembly();
-        string title = assembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product
+        var assembly = Assembly.GetExecutingAssembly();
+        var title = assembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product
             ?? assembly.GetName().Name
             ?? "Ado Work Item Tree Cloner";
-        string version = assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+        var version = assembly.GetName().Version?.ToString(3) ?? "1.0.0";
 
         AnsiConsole.Write(new FigletText(title).Color(Color.Cyan1));
         AnsiConsole.MarkupLine($"[grey]v{version}[/]");
@@ -44,7 +44,7 @@ internal static class ConsoleRenderer
         AnsiConsole.Write(table);
         AnsiConsole.WriteLine();
 
-        string action = options.DryRun
+        var action = options.DryRun
             ? $"[yellow]Dry run:[/] the tree rooted at [cyan]{options.RootId}[/] will be read and displayed, but no work items will be created."
             : $"[yellow]Clone:[/] the tree rooted at [cyan]{options.RootId}[/] will be cloned into project [cyan]{Markup.Escape(options.Project)}[/].";
 
@@ -59,7 +59,7 @@ internal static class ConsoleRenderer
         AnsiConsole.WriteLine();
         AnsiConsole.MarkupLine($"[bold]Source tree[/] [grey]({root.CountNodes()} work items)[/]");
 
-        Tree tree = new Tree(FormatNode(root));
+        var tree = new Tree(FormatNode(root));
         AddChildren(tree, root.Children);
         AnsiConsole.Write(tree);
     }

@@ -126,13 +126,13 @@ internal static class CliApplication
         Option<bool> copyAssignedToOption,
         Option<bool> notifyOption)
     {
-        string? organization = parseResult.GetValue(organizationOption);
-        string? project = parseResult.GetValue(projectOption);
-        int rootId = parseResult.GetValue(rootOption);
-        string? pat = parseResult.GetValue(patOption) ??
+        var organization = parseResult.GetValue(organizationOption);
+        var project = parseResult.GetValue(projectOption);
+        var rootId = parseResult.GetValue(rootOption);
+        var pat = parseResult.GetValue(patOption) ??
                   Environment.GetEnvironmentVariable("AZURE_DEVOPS_PAT");
 
-        bool isMissingRequiredInput =
+        var isMissingRequiredInput =
             string.IsNullOrWhiteSpace(organization) ||
             string.IsNullOrWhiteSpace(project) ||
             rootId <= 0 ||
@@ -165,8 +165,8 @@ internal static class CliApplication
 
             if (rootId <= 0)
             {
-                string? rootIdText = PromptOptionalString("[yellow]--root[/] work item ID:");
-                if (!string.IsNullOrWhiteSpace(rootIdText) && int.TryParse(rootIdText, out int parsedRootId))
+                var rootIdText = PromptOptionalString("[yellow]--root[/] work item ID:");
+                if (!string.IsNullOrWhiteSpace(rootIdText) && int.TryParse(rootIdText, out var parsedRootId))
                 {
                     rootId = parsedRootId;
                 }
@@ -212,7 +212,7 @@ internal static class CliApplication
             prompt.Secret();
         }
 
-        string value = AnsiConsole.Prompt(prompt);
+        var value = AnsiConsole.Prompt(prompt);
         return string.IsNullOrWhiteSpace(value) ? null : value;
     }
 
@@ -222,7 +222,7 @@ internal static class CliApplication
     {
         ConsoleRenderer.RenderOptions(commandLineOptions);
 
-        CloneOptions cloneOptions = new CloneOptions(
+        var cloneOptions = new CloneOptions(
             commandLineOptions.TitleSuffix,
             commandLineOptions.CopyAreaPath,
             commandLineOptions.CopyIterationPath,
@@ -231,13 +231,13 @@ internal static class CliApplication
 
         try
         {
-            using AzureDevOpsClient client = new AzureDevOpsClient(
+            using var client = new AzureDevOpsClient(
                 new AzureDevOpsClientOptions(
                     commandLineOptions.Organization,
                     commandLineOptions.Project,
                     commandLineOptions.PersonalAccessToken));
 
-            WorkItemTreeCloner cloner = new WorkItemTreeCloner(client, cloneOptions);
+            var cloner = new WorkItemTreeCloner(client, cloneOptions);
 
             WorkItemNode sourceRoot = await AnsiConsole.Status()
                 .Spinner(Spinner.Known.Dots)

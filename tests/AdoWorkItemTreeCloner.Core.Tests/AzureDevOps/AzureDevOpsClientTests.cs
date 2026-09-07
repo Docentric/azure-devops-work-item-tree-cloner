@@ -15,7 +15,7 @@ public sealed class AzureDevOpsClientTests
     [Fact]
     public async Task GetWorkItemAsync_UsesExpectedUriAndBasicAuthentication()
     {
-        RecordingHttpMessageHandler handler = new RecordingHttpMessageHandler(
+        var handler = new RecordingHttpMessageHandler(
             _ => JsonResponse("{\"id\":123,\"fields\":{}}"));
 
         using AzureDevOpsClient client = CreateClient(handler);
@@ -38,7 +38,7 @@ public sealed class AzureDevOpsClientTests
     [Fact]
     public async Task CreateWorkItemAsync_SendsJsonPatchAndSuppressNotifications()
     {
-        RecordingHttpMessageHandler handler = new RecordingHttpMessageHandler(
+        var handler = new RecordingHttpMessageHandler(
             _ => JsonResponse("{\"id\":456,\"fields\":{}}"));
 
         using AzureDevOpsClient client = CreateClient(handler);
@@ -52,7 +52,7 @@ public sealed class AzureDevOpsClientTests
             }
         ];
 
-        int id = await client.CreateWorkItemAsync(
+        var id = await client.CreateWorkItemAsync(
             "Product Backlog Item",
             patch,
             suppressNotifications: true,
@@ -75,7 +75,7 @@ public sealed class AzureDevOpsClientTests
     [Fact]
     public async Task AddParentRelationAsync_UsesHierarchyReverseRelation()
     {
-        RecordingHttpMessageHandler handler = new RecordingHttpMessageHandler(_ => JsonResponse("{\"id\":456}"));
+        var handler = new RecordingHttpMessageHandler(_ => JsonResponse("{\"id\":456}"));
         using AzureDevOpsClient client = CreateClient(handler);
 
         await client.AddParentRelationAsync(

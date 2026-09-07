@@ -11,7 +11,7 @@ internal static class WorkItemJsonFactory
         IEnumerable<int>? children = null,
         Action<JsonObject>? configureFields = null)
     {
-        JsonObject fields = new JsonObject
+        var fields = new JsonObject
         {
             ["System.WorkItemType"] = type,
             ["System.Title"] = title,
@@ -24,8 +24,8 @@ internal static class WorkItemJsonFactory
 
         configureFields?.Invoke(fields);
 
-        JsonArray relations = new JsonArray();
-        foreach (int childId in children ?? [])
+        JsonArray relations = [];
+        foreach (var childId in children ?? [])
         {
             relations.Add(
                 new JsonObject

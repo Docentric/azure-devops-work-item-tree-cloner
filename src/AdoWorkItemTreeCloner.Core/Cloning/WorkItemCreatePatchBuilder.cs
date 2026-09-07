@@ -7,14 +7,14 @@ namespace AdoWorkItemTreeCloner.Core.Cloning;
 /// </summary>
 public static class WorkItemCreatePatchBuilder
 {
-    private static readonly HashSet<string> CopyableSystemFields = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> _copyableSystemFields = new(StringComparer.OrdinalIgnoreCase)
     {
         "System.Title",
         "System.Description",
         "System.Tags"
     };
 
-    private static readonly HashSet<string> ExcludedFields = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> _excludedFields = new(StringComparer.OrdinalIgnoreCase)
     {
         "System.Id",
         "System.Rev",
@@ -64,9 +64,9 @@ public static class WorkItemCreatePatchBuilder
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(options);
 
-        List<JsonObject> operations = new List<JsonObject>();
+        List<JsonObject> operations = [];
 
-        foreach ((string fieldName, JsonNode? value) in source.Fields)
+        foreach ((var fieldName, JsonNode? value) in source.Fields)
         {
             if (value is null || !ShouldCopyField(fieldName, options))
             {
@@ -82,7 +82,7 @@ public static class WorkItemCreatePatchBuilder
             operations.Add(CreateFieldOperation(fieldName, clonedValue));
         }
 
-        bool hasTitle = operations.Any(static operation =>
+        var hasTitle = operations.Any(static operation =>
             string.Equals(
                 operation["path"]?.GetValue<string>(),
                 "/fields/System.Title",
@@ -116,7 +116,7 @@ public static class WorkItemCreatePatchBuilder
     {
         if (value is JsonObject identity &&
             identity["uniqueName"] is JsonValue uniqueNameValue &&
-            uniqueNameValue.TryGetValue<string>(out string? uniqueName) &&
+            uniqueNameValue.TryGetValue<string>(out var uniqueName) &&
             !string.IsNullOrWhiteSpace(uniqueName))
         {
             return JsonValue.Create(uniqueName)!;
@@ -127,7 +127,7 @@ public static class WorkItemCreatePatchBuilder
 
     private static bool ShouldCopyField(string fieldName, CloneOptions options)
     {
-        if (ExcludedFields.Contains(fieldName))
+        if (_excludedFields.Contains(fieldName))
         {
             return false;
         }
@@ -149,7 +149,7 @@ public static class WorkItemCreatePatchBuilder
 
         if (fieldName.StartsWith("System.", StringComparison.OrdinalIgnoreCase))
         {
-            return CopyableSystemFields.Contains(fieldName);
+            return _copyableSystemFields.Contains(fieldName);
         }
 
         return true;
