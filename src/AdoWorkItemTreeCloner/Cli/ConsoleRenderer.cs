@@ -40,6 +40,9 @@ internal static class ConsoleRenderer
         table.AddRow("Copy iteration path", FormatBool(options.CopyIterationPath));
         table.AddRow("Copy assigned to", FormatBool(options.CopyAssignedTo));
         table.AddRow("Suppress notifications", FormatBool(options.SuppressNotifications));
+        table.AddRow(
+            "New parent work item",
+            options.NewParentId is int newParentId ? $"[cyan]{newParentId}[/]" : "[grey](none)[/]");
 
         AnsiConsole.Write(table);
         AnsiConsole.WriteLine();

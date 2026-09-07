@@ -69,6 +69,12 @@ internal static class CliApplication
             Description = "Allow Azure DevOps notifications for created/updated work items. Notifications are suppressed by default."
         };
 
+        Option<int?> newParentIdOption = new("--newparentid")
+        {
+            Description = "ID of an existing Azure DevOps work item that becomes the parent of the newly created root work item. " +
+                "When omitted, the cloned root is created without a parent."
+        };
+
         RootCommand rootCommand = new(GetAssemblyDescription())
         {
             organizationOption,
@@ -80,7 +86,8 @@ internal static class CliApplication
             resetAreaPathOption,
             copyIterationPathOption,
             copyAssignedToOption,
-            notifyOption
+            notifyOption,
+            newParentIdOption
         };
 
         rootCommand.SetAction(async (parseResult, cancellationToken) =>
@@ -96,7 +103,8 @@ internal static class CliApplication
                 resetAreaPathOption,
                 copyIterationPathOption,
                 copyAssignedToOption,
-                notifyOption);
+                notifyOption,
+                newParentIdOption);
 
             if (options is null)
             {
@@ -124,7 +132,8 @@ internal static class CliApplication
         Option<bool> resetAreaPathOption,
         Option<bool> copyIterationPathOption,
         Option<bool> copyAssignedToOption,
-        Option<bool> notifyOption)
+        Option<bool> notifyOption,
+        Option<int?> newParentIdOption)
     {
         var organization = parseResult.GetValue(organizationOption);
         var project = parseResult.GetValue(projectOption);
@@ -199,7 +208,8 @@ internal static class CliApplication
             copyAreaPath: !parseResult.GetValue(resetAreaPathOption),
             copyIterationPath: parseResult.GetValue(copyIterationPathOption),
             copyAssignedTo: parseResult.GetValue(copyAssignedToOption),
-            suppressNotifications: !parseResult.GetValue(notifyOption));
+            suppressNotifications: !parseResult.GetValue(notifyOption),
+            newParentId: parseResult.GetValue(newParentIdOption));
     }
 
     private static string? PromptOptionalString(string markup, bool isSecret = false)
@@ -258,7 +268,7 @@ internal static class CliApplication
                 .Spinner(Spinner.Known.Dots)
                 .StartAsync(
                     "Cloning work item tree...",
-                    _ => cloner.CloneAsync(sourceRoot, cancellationToken));
+                    _ => cloner.CloneAsync(sourceRoot, commandLineOptions.NewParentId, cancellationToken));
 
             ConsoleRenderer.RenderResult(result);
             return 0;

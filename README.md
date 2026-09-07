@@ -156,6 +156,19 @@ Source ID  New ID
 ...
 ```
 
+To attach the newly cloned root under an existing work item, pass `--newparentid`:
+
+```powershell
+dotnet run --project src/AdoWorkItemTreeCloner -- `
+  --organization "https://dev.azure.com/docentric" `
+  --project "DocentricAX7_DEV" `
+  --root 15205 `
+  --title-suffix " - Copy" `
+  --newparentid 14000
+```
+
+When `--newparentid` is provided, a Parent/Child relation is created between the specified work item and the newly cloned root, in addition to the relations recreated within the cloned tree. The relation count reported at the end includes this extra link.
+
 ## CLI options
 
 | Option | Description | Default |
@@ -169,6 +182,9 @@ Source ID  New ID
 | `--reset-area-path` | Do not copy `System.AreaPath`. | Area Path copied |
 | `--copy-iteration-path` | Copy `System.IterationPath`. | `false` |
 | `--copy-assigned-to` | Copy `System.AssignedTo`. | `false` |
+| `--notify` | Allow Azure DevOps notifications for created/updated work items. | Notifications suppressed |
+| `--newparentid` | ID of an existing work item that becomes the parent of the newly created root work item. | No parent link created |
+
 | `--notify` | Allow normal Azure DevOps notifications. | Notifications suppressed |
 
 `System.CommandLine` also provides `--help` and `--version`.

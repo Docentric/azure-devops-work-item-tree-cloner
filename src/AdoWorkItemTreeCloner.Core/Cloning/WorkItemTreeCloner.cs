@@ -51,10 +51,15 @@ public sealed class WorkItemTreeCloner
     /// Clones all work items and recreates their Parent/Child hierarchy.
     /// </summary>
     /// <param name="sourceRoot">Root of the already loaded source hierarchy.</param>
+    /// <param name="newParentId">
+    /// Optional ID of an existing Azure DevOps work item that becomes the parent of the newly created root
+    /// work item. When <see langword="null"/>, the cloned root is created without a parent.
+    /// </param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
     /// <returns>Mapping and relation statistics for the cloned hierarchy.</returns>
     public async Task<CloneResult> CloneAsync(
         WorkItemNode sourceRoot,
+        int? newParentId,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(sourceRoot);
@@ -67,6 +72,17 @@ public sealed class WorkItemTreeCloner
                 result,
                 cancellationToken)
             .ConfigureAwait(false);
+
+        if (newParentId.HasValue)
+        {
+            await _client.AddParentRelationAsync(
+                    result.RootNewId,
+                    newParentId.Value,
+                    _options.SuppressNotifications,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            result.RelationCount++;
+        }
 
         return result;
     }

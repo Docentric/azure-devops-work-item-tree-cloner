@@ -121,7 +121,7 @@ public sealed class WorkItemTreeClonerTests
 
         var cloner = new WorkItemTreeCloner(client, _defaultOptions);
         WorkItemNode tree = await cloner.LoadTreeAsync(1, TestContext.Current.CancellationToken);
-        CloneResult result = await cloner.CloneAsync(tree, TestContext.Current.CancellationToken);
+        CloneResult result = await cloner.CloneAsync(tree, newParentId: null, TestContext.Current.CancellationToken);
 
         Assert.Equal(3, result.IdMap.Count);
         Assert.Equal(1000, result.RootNewId);
@@ -159,6 +159,27 @@ public sealed class WorkItemTreeClonerTests
                 Assert.Equal(1001, second.ParentId);
                 Assert.True(second.SuppressNotifications);
             });
+    }
+
+    /// <summary>
+    /// Verifies that when a new parent ID is supplied, the cloned root is linked to that existing work item
+    /// via a Parent/Child relation and the relation count reflects the extra link.
+    /// </summary>
+    [Fact]
+    public async Task CloneAsync_LinksClonedRootToNewParentWhenProvided()
+    {
+        var client = new FakeAzureDevOpsClient();
+        client.WorkItems[1] = WorkItemJsonFactory.Create(1, "Epic", "Root");
+
+        var cloner = new WorkItemTreeCloner(client, _defaultOptions);
+        WorkItemNode tree = await cloner.LoadTreeAsync(1, TestContext.Current.CancellationToken);
+        CloneResult result = await cloner.CloneAsync(tree, newParentId: 42, TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, result.RelationCount);
+        FakeAzureDevOpsClient.ParentLinkCall link = Assert.Single(client.ParentLinkCalls);
+        Assert.Equal(result.RootNewId, link.ChildId);
+        Assert.Equal(42, link.ParentId);
+        Assert.True(link.SuppressNotifications);
     }
 
     private static T GetFieldValue<T>(
