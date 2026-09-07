@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Reflection;
 
 using AdoWorkItemTreeCloner.Core.AzureDevOps;
 using AdoWorkItemTreeCloner.Core.Cloning;
@@ -11,6 +12,7 @@ internal static class CliApplication
     public static Task<int> RunAsync(string[] args)
     {
         ArgumentNullException.ThrowIfNull(args);
+        ConsoleRenderer.RenderBanner();
         return CreateRootCommand().Parse(args).InvokeAsync();
     }
 
@@ -67,8 +69,7 @@ internal static class CliApplication
             Description = "Allow Azure DevOps notifications for created/updated work items. Notifications are suppressed by default."
         };
 
-        RootCommand rootCommand = new(
-            "Recursively clone an Azure DevOps Parent/Child work item tree.")
+        RootCommand rootCommand = new(GetAssemblyDescription())
         {
             organizationOption,
             projectOption,
@@ -107,6 +108,10 @@ internal static class CliApplication
 
         return rootCommand;
     }
+
+    private static string GetAssemblyDescription() =>
+        Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description ??
+        "Recursively clone an Azure DevOps Parent/Child work item tree.";
 
     private static CommandLineOptions? BindOptions(
         ParseResult parseResult,
@@ -215,6 +220,8 @@ internal static class CliApplication
         CommandLineOptions commandLineOptions,
         CancellationToken cancellationToken)
     {
+        ConsoleRenderer.RenderOptions(commandLineOptions);
+
         CloneOptions cloneOptions = new CloneOptions(
             commandLineOptions.TitleSuffix,
             commandLineOptions.CopyAreaPath,

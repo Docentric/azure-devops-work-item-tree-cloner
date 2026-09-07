@@ -6,6 +6,9 @@
     <IsPackable>false</IsPackable>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);SA0001</NoWarn>
+    <Version>1.0.0</Version>
+    <Product>Azure DevOps Work Item Tree Cloner</Product>
+    <Description>Recursively clones an Azure DevOps Parent/Child work item tree.</Description>
   </PropertyGroup>
 
   <ItemGroup>

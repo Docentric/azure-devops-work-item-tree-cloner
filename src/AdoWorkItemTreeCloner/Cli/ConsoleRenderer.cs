@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Reflection;
 
 using AdoWorkItemTreeCloner.Core.Cloning;
 using Spectre.Console;
@@ -7,6 +8,50 @@ namespace AdoWorkItemTreeCloner.Cli;
 
 internal static class ConsoleRenderer
 {
+    public static void RenderBanner()
+    {
+        Assembly assembly = Assembly.GetExecutingAssembly();
+        string title = assembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product
+            ?? assembly.GetName().Name
+            ?? "Ado Work Item Tree Cloner";
+        string version = assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+
+        AnsiConsole.Write(new FigletText(title).Color(Color.Cyan1));
+        AnsiConsole.MarkupLine($"[grey]v{version}[/]");
+        AnsiConsole.WriteLine();
+    }
+
+    public static void RenderOptions(CommandLineOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        Table table = new Table()
+            .Border(TableBorder.Rounded)
+            .Title("[bold]Configured options[/]")
+            .AddColumn("Option")
+            .AddColumn("Value");
+
+        table.AddRow("Organization", $"[cyan]{Markup.Escape(options.Organization)}[/]");
+        table.AddRow("Project", $"[cyan]{Markup.Escape(options.Project)}[/]");
+        table.AddRow("Root work item", $"[cyan]{options.RootId}[/]");
+        table.AddRow("Title suffix", $"[cyan]{Markup.Escape(options.TitleSuffix)}[/]");
+        table.AddRow("Dry run", FormatBool(options.DryRun));
+        table.AddRow("Copy area path", FormatBool(options.CopyAreaPath));
+        table.AddRow("Copy iteration path", FormatBool(options.CopyIterationPath));
+        table.AddRow("Copy assigned to", FormatBool(options.CopyAssignedTo));
+        table.AddRow("Suppress notifications", FormatBool(options.SuppressNotifications));
+
+        AnsiConsole.Write(table);
+        AnsiConsole.WriteLine();
+
+        string action = options.DryRun
+            ? $"[yellow]Dry run:[/] the tree rooted at [cyan]{options.RootId}[/] will be read and displayed, but no work items will be created."
+            : $"[yellow]Clone:[/] the tree rooted at [cyan]{options.RootId}[/] will be cloned into project [cyan]{Markup.Escape(options.Project)}[/].";
+
+        AnsiConsole.MarkupLine(action);
+        AnsiConsole.WriteLine();
+    }
+
     public static void RenderTree(WorkItemNode root)
     {
         ArgumentNullException.ThrowIfNull(root);
@@ -56,4 +101,7 @@ internal static class ConsoleRenderer
 
     private static string FormatNode(WorkItemNode node) =>
         $"[cyan]{node.Id}[/] [grey]({Markup.Escape(node.WorkItemType)})[/] {Markup.Escape(node.Title)}";
+
+    private static string FormatBool(bool value) =>
+        value ? "[green]yes[/]" : "[grey]no[/]";
 }
