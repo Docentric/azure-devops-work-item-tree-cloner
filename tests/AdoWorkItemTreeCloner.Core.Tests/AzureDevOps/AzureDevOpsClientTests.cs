@@ -8,6 +8,10 @@ namespace AdoWorkItemTreeCloner.Core.Tests.AzureDevOps;
 
 public sealed class AzureDevOpsClientTests
 {
+    /// <summary>
+    /// Verifies the client requests the work item with expanded relations and Basic authentication,
+    /// since Azure DevOps rejects requests without a valid auth header.
+    /// </summary>
     [Fact]
     public async Task GetWorkItemAsync_UsesExpectedUriAndBasicAuthentication()
     {
@@ -28,6 +32,9 @@ public sealed class AzureDevOpsClientTests
             handler.AuthorizationParameter);
     }
 
+    /// <summary>
+    /// Verifies work item creation sends a JSON Patch body and forwards the suppress-notifications flag.
+    /// </summary>
     [Fact]
     public async Task CreateWorkItemAsync_SendsJsonPatchAndSuppressNotifications()
     {
@@ -62,6 +69,9 @@ public sealed class AzureDevOpsClientTests
         Assert.Contains("System.Title", handler.Body, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Verifies the parent relation is added using the organization-scoped URL and the reverse hierarchy link type.
+    /// </summary>
     [Fact]
     public async Task AddParentRelationAsync_UsesHierarchyReverseRelation()
     {

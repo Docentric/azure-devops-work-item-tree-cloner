@@ -15,6 +15,9 @@ public sealed class WorkItemTreeClonerTests
         copyAssignedTo: false,
         suppressNotifications: true);
 
+    /// <summary>
+    /// Verifies the full Parent/Child hierarchy is loaded recursively, preserving each node's children.
+    /// </summary>
     [Fact]
     public async Task LoadTreeAsync_LoadsCompleteRecursiveHierarchy()
     {
@@ -40,6 +43,9 @@ public sealed class WorkItemTreeClonerTests
             featureB => Assert.Equal(3, featureB.Id));
     }
 
+    /// <summary>
+    /// Verifies non Parent/Child relations (such as Related) are ignored when building the hierarchy.
+    /// </summary>
     [Fact]
     public async Task LoadTreeAsync_IgnoresNonChildRelations()
     {
@@ -62,6 +68,9 @@ public sealed class WorkItemTreeClonerTests
         Assert.Equal(2, child.Id);
     }
 
+    /// <summary>
+    /// Verifies a cycle in the Parent/Child hierarchy is detected and reported instead of causing infinite recursion.
+    /// </summary>
     [Fact]
     public async Task LoadTreeAsync_ThrowsWhenHierarchyContainsCycle()
     {
@@ -77,6 +86,9 @@ public sealed class WorkItemTreeClonerTests
         Assert.Contains("Cycle detected", exception.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Verifies loading fails when a work item appears more than once in the hierarchy, since the source must be a tree.
+    /// </summary>
     [Fact]
     public async Task LoadTreeAsync_ThrowsWhenItemOccursMoreThanOnce()
     {
@@ -94,6 +106,9 @@ public sealed class WorkItemTreeClonerTests
         Assert.Contains("occurs more than once", exception.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Verifies every node in the source tree is cloned and that Parent/Child links are recreated against the new IDs.
+    /// </summary>
     [Fact]
     public async Task CloneAsync_ClonesEveryNodeAndRecreatesParentChildLinks()
     {

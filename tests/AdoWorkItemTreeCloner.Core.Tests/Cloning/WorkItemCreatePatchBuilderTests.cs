@@ -6,6 +6,9 @@ namespace AdoWorkItemTreeCloner.Core.Tests.Cloning;
 
 public sealed class WorkItemCreatePatchBuilderTests
 {
+    /// <summary>
+    /// Verifies useful and custom fields are copied while server-managed fields (state, dates) are excluded.
+    /// </summary>
     [Fact]
     public void Build_CopiesUsefulAndCustomFieldsButNotServerManagedFields()
     {
@@ -29,6 +32,9 @@ public sealed class WorkItemCreatePatchBuilderTests
         Assert.DoesNotContain(operations, operation => HasField(operation, "System.CreatedDate"));
     }
 
+    /// <summary>
+    /// Verifies area path, iteration path, and assigned-to are copied only when the corresponding clone option is enabled.
+    /// </summary>
     [Fact]
     public void Build_RespectsClassificationAndAssignmentOptions()
     {
@@ -59,6 +65,9 @@ public sealed class WorkItemCreatePatchBuilderTests
         Assert.Equal("Root", GetFieldValue<string>(operations, "System.Title"));
     }
 
+    /// <summary>
+    /// Verifies backlog ordering fields are always excluded, since they are re-assigned by Azure DevOps on create.
+    /// </summary>
     [Fact]
     public void Build_ExcludesBacklogOrderingFields()
     {
