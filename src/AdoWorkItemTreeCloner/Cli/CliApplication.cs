@@ -18,20 +18,17 @@ internal static class CliApplication
     {
         Option<string?> organizationOption = new("--organization")
         {
-            Description = "Azure DevOps organization URL, for example https://dev.azure.com/docentric.",
-            Required = true
+            Description = "Azure DevOps organization URL, for example https://dev.azure.com/docentric."
         };
 
         Option<string?> projectOption = new("--project")
         {
-            Description = "Azure DevOps project containing the source tree and receiving the clone.",
-            Required = true
+            Description = "Azure DevOps project containing the source tree and receiving the clone."
         };
 
         Option<int> rootOption = new("--root")
         {
-            Description = "ID of the root work item to clone.",
-            Required = true
+            Description = "ID of the root work item to clone."
         };
 
         Option<string?> patOption = new("--pat")
@@ -130,29 +127,88 @@ internal static class CliApplication
         string? pat = parseResult.GetValue(patOption) ??
                   Environment.GetEnvironmentVariable("AZURE_DEVOPS_PAT");
 
-        if (string.IsNullOrWhiteSpace(organization) ||
+        bool isMissingRequiredInput =
+            string.IsNullOrWhiteSpace(organization) ||
             string.IsNullOrWhiteSpace(project) ||
             rootId <= 0 ||
-            string.IsNullOrWhiteSpace(pat))
+            string.IsNullOrWhiteSpace(pat);
+
+        if (isMissingRequiredInput)
         {
-            AnsiConsole.MarkupLine("[red]Missing required input.[/]");
+            if (Console.IsInputRedirected || Console.IsOutputRedirected)
+            {
+                AnsiConsole.MarkupLine("[red]Missing required input.[/]");
+                AnsiConsole.MarkupLine(
+                    "Required: [yellow]--organization[/], [yellow]--project[/], [yellow]--root[/], " +
+                    "and a PAT through [yellow]AZURE_DEVOPS_PAT[/] or [yellow]--pat[/].");
+                return null;
+            }
+
+            AnsiConsole.MarkupLine("[yellow]Missing required input.[/]");
             AnsiConsole.MarkupLine(
-                "Required: [yellow]--organization[/], [yellow]--project[/], [yellow]--root[/], " +
-                "and a PAT through [yellow]AZURE_DEVOPS_PAT[/] or [yellow]--pat[/].");
-            return null;
+                "Press [yellow]Enter[/] without a value to show help instead of continuing.");
+
+            if (string.IsNullOrWhiteSpace(organization))
+            {
+                organization = PromptOptionalString("Azure DevOps [yellow]--organization[/] URL:");
+            }
+
+            if (string.IsNullOrWhiteSpace(project))
+            {
+                project = PromptOptionalString("Azure DevOps [yellow]--project[/] name:");
+            }
+
+            if (rootId <= 0)
+            {
+                string? rootIdText = PromptOptionalString("[yellow]--root[/] work item ID:");
+                if (!string.IsNullOrWhiteSpace(rootIdText) && int.TryParse(rootIdText, out int parsedRootId))
+                {
+                    rootId = parsedRootId;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(pat))
+            {
+                pat = PromptOptionalString("Azure DevOps [yellow]--pat[/] (input hidden):", isSecret: true);
+            }
+
+            if (string.IsNullOrWhiteSpace(organization) ||
+                string.IsNullOrWhiteSpace(project) ||
+                rootId <= 0 ||
+                string.IsNullOrWhiteSpace(pat))
+            {
+                AnsiConsole.MarkupLine("[red]Required input was not provided.[/]");
+                AnsiConsole.WriteLine();
+                parseResult.CommandResult.Command.Parse("--help").Invoke();
+                return null;
+            }
         }
 
         return new CommandLineOptions(
-            organization,
-            project,
+            organization!,
+            project!,
             rootId,
-            pat,
+            pat!,
             parseResult.GetValue(titleSuffixOption) ?? " - Copy",
             parseResult.GetValue(dryRunOption),
             copyAreaPath: !parseResult.GetValue(resetAreaPathOption),
             copyIterationPath: parseResult.GetValue(copyIterationPathOption),
             copyAssignedTo: parseResult.GetValue(copyAssignedToOption),
             suppressNotifications: !parseResult.GetValue(notifyOption));
+    }
+
+    private static string? PromptOptionalString(string markup, bool isSecret = false)
+    {
+        TextPrompt<string> prompt = new TextPrompt<string>(markup)
+            .AllowEmpty();
+
+        if (isSecret)
+        {
+            prompt.Secret();
+        }
+
+        string value = AnsiConsole.Prompt(prompt);
+        return string.IsNullOrWhiteSpace(value) ? null : value;
     }
 
     private static async Task<int> ExecuteAsync(
