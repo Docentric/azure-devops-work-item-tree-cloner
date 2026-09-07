@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/.git/">
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+  </Folder>
+  <Folder Name="/.readme/">
+    <File Path="CHANGELOG.md" />
+    <File Path="CONTRIBUTING.md" />
+    <File Path="README.md" />
+    <File Path="SECURITY.md" />
+  </Folder>
+  <Folder Name="/.solution/">
+    <File Path=".env.example" />
+    <File Path=".vsspell" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="NuGet.Config" />
+    <File Path="stylecop.json" />
+  </Folder>
+  <Project Path="src/AdoWorkItemTreeCloner.Core/AdoWorkItemTreeCloner.Core.csproj" />
+  <Project Path="src/AdoWorkItemTreeCloner/AdoWorkItemTreeCloner.csproj" />
+  <Project Path="tests/AdoWorkItemTreeCloner.Core.Tests/AdoWorkItemTreeCloner.Core.Tests.csproj" />
+</Solution>

@@ -1,0 +1,108 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  BuildConfiguration: Release
+  DOTNET_NOLOGO: 'true'
+  DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+  TESTINGPLATFORM_TELEMETRY_OPTOUT: '1'
+  NUGET_XMLDOC_MODE: skip
+  NUGET_PACKAGES: '$(Pipeline.Workspace)/.nuget/packages'
+
+steps:
+  - checkout: self
+    clean: true
+    fetchDepth: 0
+
+  - task: UseDotNet@2
+    displayName: Install .NET SDK from global.json
+    inputs:
+      packageType: sdk
+      useGlobalJson: true
+      workingDirectory: '$(Build.SourcesDirectory)'
+
+  - task: Cache@2
+    displayName: Cache NuGet packages
+    inputs:
+      key: 'nuget | "$(Agent.OS)" | **/Directory.Packages.props | **/*.csproj | global.json'
+      restoreKeys: |
+        nuget | "$(Agent.OS)"
+        nuget
+      path: '$(NUGET_PACKAGES)'
+
+  - script: dotnet --info
+    displayName: .NET information
+
+  - script: dotnet restore AdoWorkItemTreeCloner.slnx
+    displayName: Restore
+
+  - script: dotnet format AdoWorkItemTreeCloner.slnx --verify-no-changes --no-restore
+    displayName: Verify formatting
+
+  - script: dotnet build AdoWorkItemTreeCloner.slnx --configuration $(BuildConfiguration) --no-restore
+    displayName: Build
+    env:
+      CI: 'true'
+
+  - script: >-
+      dotnet test tests/AdoWorkItemTreeCloner.Core.Tests/AdoWorkItemTreeCloner.Core.Tests.csproj
+      --configuration $(BuildConfiguration)
+      --no-build
+      --results-directory "$(Agent.TempDirectory)/TestResults"
+      --report-trx
+      --report-trx-filename "{asm}_{tfm}_{arch}.trx"
+      --coverage
+      --coverage-output-format cobertura
+    displayName: Test and collect coverage
+    env:
+      CI: 'true'
+
+  - task: PublishTestResults@2
+    displayName: Publish test results
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: VSTest
+      testResultsFiles: '$(Agent.TempDirectory)/TestResults/**/*.trx'
+      failTaskOnFailedTests: true
+      testRunTitle: AdoWorkItemTreeCloner
+
+  - task: PublishCodeCoverageResults@2
+    displayName: Publish code coverage
+    condition: succeededOrFailed()
+    inputs:
+      summaryFileLocation: '$(Agent.TempDirectory)/TestResults/**/*.cobertura.xml'
+
+  - script: >-
+      dotnet publish src/AdoWorkItemTreeCloner/AdoWorkItemTreeCloner.csproj
+      --configuration $(BuildConfiguration)
+      --no-build
+      --no-restore
+      --output "$(Build.ArtifactStagingDirectory)/publish"
+    displayName: Publish application
+    env:
+      CI: 'true'
+
+  - task: ArchiveFiles@2
+    displayName: Archive application
+    inputs:
+      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/publish'
+      includeRootFolder: false
+      archiveType: zip
+      archiveFile: '$(Build.ArtifactStagingDirectory)/AdoWorkItemTreeCloner.zip'
+      replaceExistingArchive: true
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish application artifact
+    inputs:
+      targetPath: '$(Build.ArtifactStagingDirectory)/AdoWorkItemTreeCloner.zip'
+      artifact: AdoWorkItemTreeCloner

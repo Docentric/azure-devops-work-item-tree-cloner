@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AdoWorkItemTreeCloner": {
+      "commandName": "Project",
+      "commandLineArgs": "--organization docentric --project DocentricAX7_DEV --root "
+    }
+  }
+}
