@@ -20,6 +20,8 @@ internal sealed class FakeAzureDevOpsClient : IAzureDevOpsClient
 
     public List<AttachmentRelationCall> AttachmentRelationCalls { get; } = [];
 
+    public List<RelationCall> RelationCalls { get; } = [];
+
     public Task<JsonObject> GetWorkItemAsync(int id, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -96,6 +98,21 @@ internal sealed class FakeAzureDevOpsClient : IAzureDevOpsClient
         return Task.CompletedTask;
     }
 
+    public Task AddRelationAsync(
+        int workItemId,
+        string relationType,
+        int? targetWorkItemId,
+        string? targetUrl,
+        string? comment,
+        bool suppressNotifications,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        RelationCalls.Add(
+            new RelationCall(workItemId, relationType, targetWorkItemId, targetUrl, comment, suppressNotifications));
+        return Task.CompletedTask;
+    }
+
     internal sealed class CreateCall
     {
         public CreateCall(
@@ -164,6 +181,37 @@ internal sealed class FakeAzureDevOpsClient : IAzureDevOpsClient
         public int WorkItemId { get; }
 
         public string AttachmentUrl { get; }
+
+        public string? Comment { get; }
+
+        public bool SuppressNotifications { get; }
+    }
+
+    internal sealed class RelationCall
+    {
+        public RelationCall(
+            int workItemId,
+            string relationType,
+            int? targetWorkItemId,
+            string? targetUrl,
+            string? comment,
+            bool suppressNotifications)
+        {
+            WorkItemId = workItemId;
+            RelationType = relationType;
+            TargetWorkItemId = targetWorkItemId;
+            TargetUrl = targetUrl;
+            Comment = comment;
+            SuppressNotifications = suppressNotifications;
+        }
+
+        public int WorkItemId { get; }
+
+        public string RelationType { get; }
+
+        public int? TargetWorkItemId { get; }
+
+        public string? TargetUrl { get; }
 
         public string? Comment { get; }
 

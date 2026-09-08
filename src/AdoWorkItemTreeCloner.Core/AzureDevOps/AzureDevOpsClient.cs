@@ -145,6 +145,78 @@ public sealed class AzureDevOpsClient : IAzureDevOpsClient, IDisposable
     }
 
     /// <inheritdoc />
+    public async Task AddRelationAsync(
+        int workItemId,
+        string relationType,
+        int? targetWorkItemId,
+        string? targetUrl,
+        string? comment,
+        bool suppressNotifications,
+        CancellationToken cancellationToken)
+    {
+        ValidateWorkItemId(workItemId, nameof(workItemId));
+        ValidateRequiredValue(relationType, nameof(relationType));
+
+        string resolvedUrl;
+        if (targetWorkItemId.HasValue)
+        {
+            ValidateWorkItemId(targetWorkItemId.Value, nameof(targetWorkItemId));
+
+            // Work-item relation URLs are organization-scoped even when the update API call
+            // itself is project-scoped.
+            resolvedUrl = new Uri(
+                _organizationBaseUri,
+                $"_apis/wit/workItems/{targetWorkItemId.Value}").AbsoluteUri;
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(targetUrl))
+            {
+                throw new ArgumentException(
+                    "Either targetWorkItemId or targetUrl must be provided.",
+                    nameof(targetUrl));
+            }
+
+            resolvedUrl = targetUrl;
+        }
+
+        JsonObject relation = new()
+        {
+            ["rel"] = relationType,
+            ["url"] = resolvedUrl
+        };
+
+        if (!string.IsNullOrWhiteSpace(comment))
+        {
+            relation["attributes"] = new JsonObject
+            {
+                ["comment"] = comment
+            };
+        }
+
+        JsonArray patch =
+        [
+            new JsonObject
+            {
+                ["op"] = "add",
+                ["path"] = "/relations/-",
+                ["value"] = relation
+            }
+        ];
+
+        var notificationValue = suppressNotifications ? "true" : "false";
+        var relativeUri =
+            $"_apis/wit/workitems/{workItemId}?suppressNotifications={notificationValue}&api-version={ApiVersion}";
+
+        _ = await SendForJsonAsync(
+                HttpMethod.Patch,
+                new Uri(_projectBaseUri, relativeUri),
+                patch,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public async Task<byte[]> DownloadAttachmentAsync(Uri attachmentUrl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(attachmentUrl);

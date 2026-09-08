@@ -23,6 +23,12 @@ public sealed class CloneResult
     public int AttachmentCount { get; internal set; }
 
     /// <summary>
+    /// Gets the number of non-hierarchy relations (Related, Predecessor/Successor, artifact links, etc.)
+    /// recreated on the cloned work items.
+    /// </summary>
+    public int PreservedRelationCount { get; internal set; }
+
+    /// <summary>
     /// Gets the new root work item ID.
     /// </summary>
     public int RootNewId { get; internal set; }

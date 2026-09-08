@@ -288,6 +288,125 @@ public sealed class WorkItemTreeClonerTests
         Assert.Empty(client.AttachmentRelationCalls);
     }
 
+    /// <summary>
+    /// Verifies non-hierarchy relations (such as Related) are captured on the loaded node with their
+    /// relation type, parsed target ID, original URL, and comment, since they must be recreated after cloning.
+    /// </summary>
+    [Fact]
+    public async Task LoadTreeAsync_CapturesOtherRelations()
+    {
+        JsonObject root = WorkItemJsonFactory.Create(1, "Epic", "Root");
+        root["relations"]!.AsArray().Add(
+            new JsonObject
+            {
+                ["rel"] = "System.LinkTypes.Related",
+                ["url"] = "https://dev.azure.com/example/Project/_apis/wit/workItems/999",
+                ["attributes"] = new JsonObject { ["comment"] = "See also" }
+            });
+
+        var client = new FakeAzureDevOpsClient();
+        client.WorkItems[1] = root;
+
+        var cloner = new WorkItemTreeCloner(client, _defaultOptions);
+        WorkItemNode tree = await cloner.LoadTreeAsync(1, TestContext.Current.CancellationToken);
+
+        WorkItemRelation relation = Assert.Single(tree.OtherRelations);
+        Assert.Equal("System.LinkTypes.Related", relation.RelationType);
+        Assert.Equal(999, relation.TargetId);
+        Assert.Equal("https://dev.azure.com/example/Project/_apis/wit/workItems/999", relation.Url);
+        Assert.Equal("See also", relation.Comment);
+    }
+
+    /// <summary>
+    /// Verifies the link back to a node's own parent (Hierarchy-Reverse) is not captured as an "other" relation,
+    /// since it is already recreated separately via the Parent/Child cloning logic.
+    /// </summary>
+    [Fact]
+    public async Task LoadTreeAsync_IgnoresOwnHierarchyReverseRelation()
+    {
+        JsonObject root = WorkItemJsonFactory.Create(1, "Epic", "Root", [2]);
+        JsonObject child = WorkItemJsonFactory.Create(2, "Feature", "Feature");
+        child["relations"]!.AsArray().Add(
+            new JsonObject
+            {
+                ["rel"] = "System.LinkTypes.Hierarchy-Reverse",
+                ["url"] = "https://dev.azure.com/example/Project/_apis/wit/workItems/1"
+            });
+
+        var client = new FakeAzureDevOpsClient();
+        client.WorkItems[1] = root;
+        client.WorkItems[2] = child;
+
+        var cloner = new WorkItemTreeCloner(client, _defaultOptions);
+        WorkItemNode tree = await cloner.LoadTreeAsync(1, TestContext.Current.CancellationToken);
+
+        Assert.Empty(tree.Children[0].OtherRelations);
+    }
+
+    /// <summary>
+    /// Verifies a relation whose target work item is not part of the cloned tree is recreated on the clone
+    /// pointing at the original, un-cloned target rather than being remapped.
+    /// </summary>
+    [Fact]
+    public async Task CloneAsync_PreservesRelationToExternalWorkItem()
+    {
+        const string externalUrl = "https://dev.azure.com/example/Project/_apis/wit/workItems/999";
+
+        JsonObject root = WorkItemJsonFactory.Create(1, "Epic", "Root");
+        root["relations"]!.AsArray().Add(
+            new JsonObject
+            {
+                ["rel"] = "System.LinkTypes.Related",
+                ["url"] = externalUrl
+            });
+
+        var client = new FakeAzureDevOpsClient();
+        client.WorkItems[1] = root;
+
+        var cloner = new WorkItemTreeCloner(client, _defaultOptions);
+        WorkItemNode tree = await cloner.LoadTreeAsync(1, TestContext.Current.CancellationToken);
+        CloneResult result = await cloner.CloneAsync(tree, newParentId: null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, result.PreservedRelationCount);
+        FakeAzureDevOpsClient.RelationCall call = Assert.Single(client.RelationCalls);
+        Assert.Equal(result.RootNewId, call.WorkItemId);
+        Assert.Equal("System.LinkTypes.Related", call.RelationType);
+        Assert.Null(call.TargetWorkItemId);
+        Assert.Equal(externalUrl, call.TargetUrl);
+    }
+
+    /// <summary>
+    /// Verifies a relation whose target work item is itself part of the cloned tree is recreated on the clone
+    /// pointing at the newly cloned target, since the original target ID is no longer valid in the new tree.
+    /// </summary>
+    [Fact]
+    public async Task CloneAsync_RemapsRelationToClonedWorkItem()
+    {
+        JsonObject root = WorkItemJsonFactory.Create(1, "Epic", "Root", [2]);
+        JsonObject child = WorkItemJsonFactory.Create(2, "Feature", "Feature");
+        child["relations"]!.AsArray().Add(
+            new JsonObject
+            {
+                ["rel"] = "System.LinkTypes.Related",
+                ["url"] = "https://dev.azure.com/example/Project/_apis/wit/workItems/1"
+            });
+
+        var client = new FakeAzureDevOpsClient();
+        client.WorkItems[1] = root;
+        client.WorkItems[2] = child;
+
+        var cloner = new WorkItemTreeCloner(client, _defaultOptions);
+        WorkItemNode tree = await cloner.LoadTreeAsync(1, TestContext.Current.CancellationToken);
+        CloneResult result = await cloner.CloneAsync(tree, newParentId: null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, result.PreservedRelationCount);
+        FakeAzureDevOpsClient.RelationCall call = Assert.Single(client.RelationCalls);
+        Assert.Equal(result.IdMap[2], call.WorkItemId);
+        Assert.Equal("System.LinkTypes.Related", call.RelationType);
+        Assert.Equal(result.RootNewId, call.TargetWorkItemId);
+        Assert.Null(call.TargetUrl);
+    }
+
     private static T GetFieldValue<T>(
         IEnumerable<JsonObject> operations,
         string fieldName)

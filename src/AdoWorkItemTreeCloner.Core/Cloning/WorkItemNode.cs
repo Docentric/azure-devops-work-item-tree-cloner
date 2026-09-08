@@ -38,6 +38,12 @@ public sealed class WorkItemNode
     public List<WorkItemAttachment> Attachments { get; } = [];
 
     /// <summary>
+    /// Gets the source work item's non-hierarchy, non-attachment relations (Related, Predecessor/Successor,
+    /// artifact links, etc.), to be recreated on the cloned work item once the whole tree has been cloned.
+    /// </summary>
+    public List<WorkItemRelation> OtherRelations { get; } = [];
+
+    /// <summary>
     /// Counts this node and all descendants.
     /// </summary>
     /// <returns>The number of nodes in this subtree, including this node.</returns>

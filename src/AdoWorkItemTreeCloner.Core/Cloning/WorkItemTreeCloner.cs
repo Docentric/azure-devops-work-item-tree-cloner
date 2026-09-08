@@ -11,6 +11,7 @@ namespace AdoWorkItemTreeCloner.Core.Cloning;
 public sealed class WorkItemTreeCloner
 {
     private const string ChildRelation = "System.LinkTypes.Hierarchy-Forward";
+    private const string ParentRelation = "System.LinkTypes.Hierarchy-Reverse";
     private const string AttachmentRelation = "AttachedFile";
 
     private readonly IAzureDevOpsClient _client;
@@ -85,7 +86,46 @@ public sealed class WorkItemTreeCloner
             result.RelationCount++;
         }
 
+        await RecreateOtherRelationsAsync(sourceRoot, result, cancellationToken).ConfigureAwait(false);
+
         return result;
+    }
+
+    /// <summary>
+    /// Recreates every node's non-hierarchy relations on its cloned counterpart, remapping the target to the
+    /// corresponding cloned work item when the target was itself part of the cloned tree, otherwise pointing
+    /// at the original (un-cloned) target.
+    /// </summary>
+    private async Task RecreateOtherRelationsAsync(
+        WorkItemNode source,
+        CloneResult result,
+        CancellationToken cancellationToken)
+    {
+        var newId = result.IdMap[source.Id];
+
+        foreach (WorkItemRelation relation in source.OtherRelations)
+        {
+            int? remappedTargetId = relation.TargetId.HasValue &&
+                result.IdMap.TryGetValue(relation.TargetId.Value, out var newTargetId)
+                ? newTargetId
+                : null;
+
+            await _client.AddRelationAsync(
+                    newId,
+                    relation.RelationType,
+                    remappedTargetId,
+                    remappedTargetId.HasValue ? null : relation.Url,
+                    relation.Comment,
+                    _options.SuppressNotifications,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            result.PreservedRelationCount++;
+        }
+
+        foreach (WorkItemNode child in source.Children)
+        {
+            await RecreateOtherRelationsAsync(child, result, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private static string? GetString(JsonObject fields, string name)
@@ -180,8 +220,26 @@ public sealed class WorkItemTreeCloner
                     continue;
                 }
 
+                if (string.Equals(rel, ParentRelation, StringComparison.Ordinal))
+                {
+                    // The link back to this node's own parent is recreated separately via
+                    // AddParentRelationAsync; it must not be captured as an "other" relation.
+                    continue;
+                }
+
                 if (!string.Equals(rel, ChildRelation, StringComparison.Ordinal))
                 {
+                    var relationUrl = relation["url"]?.GetValue<string>();
+                    if (string.IsNullOrWhiteSpace(rel) || string.IsNullOrWhiteSpace(relationUrl))
+                    {
+                        continue;
+                    }
+
+                    JsonObject? relationAttributes = relation["attributes"]?.AsObject();
+                    var relationComment = relationAttributes?["comment"]?.GetValue<string>();
+                    node.OtherRelations.Add(
+                        new WorkItemRelation(rel, ParseWorkItemId(relationUrl), relationUrl, relationComment));
+
                     continue;
                 }
 

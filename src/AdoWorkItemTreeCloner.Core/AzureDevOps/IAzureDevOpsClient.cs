@@ -44,6 +44,32 @@ public interface IAzureDevOpsClient
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Adds a non-hierarchy relation (Related, Predecessor/Successor, artifact link, etc.) to a work item.
+    /// </summary>
+    /// <param name="workItemId">ID of the work item receiving the relation.</param>
+    /// <param name="relationType">Azure DevOps relation type (the <c>rel</c> value).</param>
+    /// <param name="targetWorkItemId">
+    /// ID of the target work item, when the relation points at a work item that should be addressed by ID
+    /// (e.g. because it was remapped to a newly cloned item). Takes precedence over <paramref name="targetUrl"/>.
+    /// </param>
+    /// <param name="targetUrl">
+    /// Absolute URL of the relation target, used when <paramref name="targetWorkItemId"/> is <see langword="null"/>
+    /// (e.g. artifact links or relations to work items that were not cloned).
+    /// </param>
+    /// <param name="comment">Optional comment describing the relation.</param>
+    /// <param name="suppressNotifications">Whether Azure DevOps notifications are suppressed.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous update.</returns>
+    Task AddRelationAsync(
+        int workItemId,
+        string relationType,
+        int? targetWorkItemId,
+        string? targetUrl,
+        string? comment,
+        bool suppressNotifications,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Downloads the binary content of an attachment.
     /// </summary>
     /// <param name="attachmentUrl">Absolute attachment content URL, typically from a work item relation.</param>

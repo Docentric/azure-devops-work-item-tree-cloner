@@ -28,6 +28,7 @@ The core library owns Azure DevOps and cloning behavior:
 - Field-copy policy.
 - Work item creation.
 - Parent relation creation.
+- Preservation of non-hierarchy relations (Related, Predecessor/Successor, artifact links, etc.), remapped to cloned targets when applicable.
 - Source → clone ID mapping.
 
 It has no third-party runtime dependencies.
@@ -41,15 +42,17 @@ The test project uses xUnit v3. Most cloning tests use an in-memory fake `IAzure
 For each source node:
 
 1. Load the work item with `$expand=relations`.
-2. Follow only `System.LinkTypes.Hierarchy-Forward` relations.
-3. Detect cycles and duplicate nodes while loading.
-4. Build a create JSON Patch using the source fields and copy policy.
-5. Create the cloned work item with the same work item type.
-6. Store `sourceId -> newId`.
-7. When the node has a cloned parent, add a `System.LinkTypes.Hierarchy-Reverse` relation to that parent.
-8. Recurse through all children.
+2. Follow only `System.LinkTypes.Hierarchy-Forward` relations to discover children.
+3. Capture `AttachedFile` relations as attachments, and every other relation (excluding the node's own `System.LinkTypes.Hierarchy-Reverse` link to its parent) as an "other" relation to recreate later.
+4. Detect cycles and duplicate nodes while loading.
+5. Build a create JSON Patch using the source fields and copy policy.
+6. Create the cloned work item with the same work item type.
+7. Store `sourceId -> newId`.
+8. When the node has a cloned parent, add a `System.LinkTypes.Hierarchy-Reverse` relation to that parent.
+9. Recurse through all children.
+10. Once the entire tree has been cloned (the full `sourceId -> newId` map is known), recreate every captured "other" relation on its cloned work item: if the relation's original target is itself part of the cloned tree, the new relation points at the corresponding cloned work item; otherwise it points at the original, un-cloned target.
 
-The root title suffix is applied only in step 4 for the root node.
+The root title suffix is applied only in step 5 for the root node.
 
 ## Failure model
 

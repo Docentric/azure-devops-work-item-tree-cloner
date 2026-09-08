@@ -78,6 +78,7 @@ internal static class ConsoleRenderer
         AnsiConsole.MarkupLine($"Work items cloned: [cyan]{result.IdMap.Count}[/]");
         AnsiConsole.MarkupLine($"Parent/Child links created: [cyan]{result.RelationCount}[/]");
         AnsiConsole.MarkupLine($"Attachments copied: [cyan]{result.AttachmentCount}[/]");
+        AnsiConsole.MarkupLine($"Other relations preserved: [cyan]{result.PreservedRelationCount}[/]");
 
         Table table = new Table()
             .Border(TableBorder.Rounded)
