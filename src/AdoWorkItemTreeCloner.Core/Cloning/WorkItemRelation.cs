@@ -11,4 +11,8 @@ namespace AdoWorkItemTreeCloner.Core.Cloning;
 /// </param>
 /// <param name="Url">Original absolute URL of the relation target, used verbatim when the target isn't remapped.</param>
 /// <param name="Comment">Optional comment attached to the relation.</param>
-public sealed record WorkItemRelation(string RelationType, int? TargetId, string Url, string? Comment);
+/// <param name="Name">
+/// Optional relation name. Azure DevOps requires this for artifact links (e.g. commit or build links); it is
+/// otherwise typically absent.
+/// </param>
+public sealed record WorkItemRelation(string RelationType, int? TargetId, string Url, string? Comment, string? Name = null);

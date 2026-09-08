@@ -104,12 +104,13 @@ internal sealed class FakeAzureDevOpsClient : IAzureDevOpsClient
         int? targetWorkItemId,
         string? targetUrl,
         string? comment,
+        string? name,
         bool suppressNotifications,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         RelationCalls.Add(
-            new RelationCall(workItemId, relationType, targetWorkItemId, targetUrl, comment, suppressNotifications));
+            new RelationCall(workItemId, relationType, targetWorkItemId, targetUrl, comment, name, suppressNotifications));
         return Task.CompletedTask;
     }
 
@@ -195,6 +196,7 @@ internal sealed class FakeAzureDevOpsClient : IAzureDevOpsClient
             int? targetWorkItemId,
             string? targetUrl,
             string? comment,
+            string? name,
             bool suppressNotifications)
         {
             WorkItemId = workItemId;
@@ -202,6 +204,7 @@ internal sealed class FakeAzureDevOpsClient : IAzureDevOpsClient
             TargetWorkItemId = targetWorkItemId;
             TargetUrl = targetUrl;
             Comment = comment;
+            Name = name;
             SuppressNotifications = suppressNotifications;
         }
 
@@ -214,6 +217,8 @@ internal sealed class FakeAzureDevOpsClient : IAzureDevOpsClient
         public string? TargetUrl { get; }
 
         public string? Comment { get; }
+
+        public string? Name { get; }
 
         public bool SuppressNotifications { get; }
     }

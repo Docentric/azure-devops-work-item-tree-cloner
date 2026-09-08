@@ -57,6 +57,9 @@ public interface IAzureDevOpsClient
     /// (e.g. artifact links or relations to work items that were not cloned).
     /// </param>
     /// <param name="comment">Optional comment describing the relation.</param>
+    /// <param name="name">
+    /// Optional relation name. Required by Azure DevOps for artifact links (e.g. commit or build links).
+    /// </param>
     /// <param name="suppressNotifications">Whether Azure DevOps notifications are suppressed.</param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous update.</returns>
@@ -66,6 +69,7 @@ public interface IAzureDevOpsClient
         int? targetWorkItemId,
         string? targetUrl,
         string? comment,
+        string? name,
         bool suppressNotifications,
         CancellationToken cancellationToken);
 

@@ -151,6 +151,7 @@ public sealed class AzureDevOpsClient : IAzureDevOpsClient, IDisposable
         int? targetWorkItemId,
         string? targetUrl,
         string? comment,
+        string? name,
         bool suppressNotifications,
         CancellationToken cancellationToken)
     {
@@ -186,12 +187,21 @@ public sealed class AzureDevOpsClient : IAzureDevOpsClient, IDisposable
             ["url"] = resolvedUrl
         };
 
-        if (!string.IsNullOrWhiteSpace(comment))
+        if (!string.IsNullOrWhiteSpace(comment) || !string.IsNullOrWhiteSpace(name))
         {
-            relation["attributes"] = new JsonObject
+            JsonObject attributes = [];
+
+            if (!string.IsNullOrWhiteSpace(name))
             {
-                ["comment"] = comment
-            };
+                attributes["name"] = name;
+            }
+
+            if (!string.IsNullOrWhiteSpace(comment))
+            {
+                attributes["comment"] = comment;
+            }
+
+            relation["attributes"] = attributes;
         }
 
         JsonArray patch =

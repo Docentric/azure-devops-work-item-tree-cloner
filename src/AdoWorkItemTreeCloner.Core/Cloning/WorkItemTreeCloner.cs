@@ -116,6 +116,7 @@ public sealed class WorkItemTreeCloner
                     remappedTargetId,
                     remappedTargetId.HasValue ? null : relation.Url,
                     relation.Comment,
+                    relation.Name,
                     _options.SuppressNotifications,
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -237,8 +238,9 @@ public sealed class WorkItemTreeCloner
 
                     JsonObject? relationAttributes = relation["attributes"]?.AsObject();
                     var relationComment = relationAttributes?["comment"]?.GetValue<string>();
+                    var relationName = relationAttributes?["name"]?.GetValue<string>();
                     node.OtherRelations.Add(
-                        new WorkItemRelation(rel, ParseWorkItemId(relationUrl), relationUrl, relationComment));
+                        new WorkItemRelation(rel, ParseWorkItemId(relationUrl), relationUrl, relationComment, relationName));
 
                     continue;
                 }
