@@ -67,10 +67,11 @@ public sealed class WorkItemCreatePatchBuilderTests
     }
 
     /// <summary>
-    /// Verifies backlog ordering fields are always excluded, since they are re-assigned by Azure DevOps on create.
+    /// Verifies Stack Rank and Backlog Priority are copied so cloned work items preserve the same relative
+    /// backlog order as the source.
     /// </summary>
     [Fact]
-    public void Build_ExcludesBacklogOrderingFields()
+    public void Build_CopiesBacklogOrderingFields()
     {
         WorkItemNode node = CreateNode(
             fields =>
@@ -81,8 +82,8 @@ public sealed class WorkItemCreatePatchBuilderTests
 
         IReadOnlyList<JsonObject> operations = WorkItemCreatePatchBuilder.Build(node, isRoot: false, DefaultOptions());
 
-        Assert.DoesNotContain(operations, operation => HasField(operation, "Microsoft.VSTS.Common.StackRank"));
-        Assert.DoesNotContain(operations, operation => HasField(operation, "Microsoft.VSTS.Common.BacklogPriority"));
+        Assert.Equal(123.4, GetFieldValue<double>(operations, "Microsoft.VSTS.Common.StackRank"));
+        Assert.Equal(456.7, GetFieldValue<double>(operations, "Microsoft.VSTS.Common.BacklogPriority"));
     }
 
     private static WorkItemNode CreateNode(Action<JsonObject> configureFields)

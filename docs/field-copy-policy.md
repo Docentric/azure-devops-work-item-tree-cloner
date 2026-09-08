@@ -64,9 +64,19 @@ The application excludes known lifecycle/server fields, including:
 - Work item type/project metadata.
 - Board column/lane data.
 - activation/resolution/closure timestamps and identities.
-- backlog ordering fields such as Stack Rank and Backlog Priority.
 
 The complete list is in `WorkItemCreatePatchBuilder.ExcludedFields`.
+
+## Backlog ordering fields
+
+Copied by default:
+
+```text
+Microsoft.VSTS.Common.StackRank
+Microsoft.VSTS.Common.BacklogPriority
+```
+
+Copying the source values preserves the same relative backlog order among cloned work items as the source hierarchy had. This can result in duplicate ordering values with existing backlog items in the target project; Azure DevOps tolerates ties and breaks them by a stable secondary sort.
 
 ## Microsoft.VSTS and custom fields
 

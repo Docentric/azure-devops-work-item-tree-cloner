@@ -44,9 +44,7 @@ public static class WorkItemCreatePatchBuilder
         "Microsoft.VSTS.Common.CreatedDate",
         "Microsoft.VSTS.Common.CreatedBy",
         "Microsoft.VSTS.Common.ChangedDate",
-        "Microsoft.VSTS.Common.ChangedBy",
-        "Microsoft.VSTS.Common.StackRank",
-        "Microsoft.VSTS.Common.BacklogPriority"
+        "Microsoft.VSTS.Common.ChangedBy"
     };
 
     /// <summary>
