@@ -141,6 +141,46 @@ public sealed class WorkItemTreeCloner
         }
     }
 
+    /// <summary>
+    /// Compares two sibling nodes by their backlog ranking field (Stack Rank), preserving the source's
+    /// original ID order for items with no rank or an identical rank.
+    /// </summary>
+    private static int CompareByBacklogOrder(WorkItemNode left, WorkItemNode right)
+    {
+        var leftRank = GetBacklogOrder(left);
+        var rightRank = GetBacklogOrder(right);
+
+        if (leftRank.HasValue && rightRank.HasValue)
+        {
+            var comparison = leftRank.Value.CompareTo(rightRank.Value);
+            return comparison != 0 ? comparison : left.Id.CompareTo(right.Id);
+        }
+
+        if (leftRank.HasValue != rightRank.HasValue)
+        {
+            return leftRank.HasValue ? -1 : 1;
+        }
+
+        return left.Id.CompareTo(right.Id);
+    }
+
+    private static double? GetBacklogOrder(WorkItemNode node)
+    {
+        return GetDouble(node.Fields, "Microsoft.VSTS.Common.StackRank")
+            ?? GetDouble(node.Fields, "Microsoft.VSTS.Common.BacklogPriority");
+    }
+
+    private static double? GetDouble(JsonObject fields, string name)
+    {
+        if (!fields.TryGetPropertyValue(name, out JsonNode? value) ||
+            value is not JsonValue jsonValue)
+        {
+            return null;
+        }
+
+        return jsonValue.TryGetValue(out double number) ? number : null;
+    }
+
     private static string? GetString(JsonObject fields, string name)
     {
         if (!fields.TryGetPropertyValue(name, out JsonNode? value) || value is null)
@@ -267,6 +307,11 @@ public sealed class WorkItemTreeCloner
                     await LoadNodeAsync(childId.Value, path, seen, cancellationToken)
                         .ConfigureAwait(false));
             }
+
+            // The relations array reflects the order links were created in, not the current backlog/board
+            // order. Re-sort children by their backlog ranking field so the clone preserves the order the
+            // user sees in Boards/Backlogs.
+            node.Children.Sort(CompareByBacklogOrder);
 
             return node;
         }

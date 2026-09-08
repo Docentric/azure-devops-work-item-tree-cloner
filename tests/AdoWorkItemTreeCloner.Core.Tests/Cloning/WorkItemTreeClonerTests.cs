@@ -47,6 +47,34 @@ public sealed class WorkItemTreeClonerTests
     }
 
     /// <summary>
+    /// Verifies children are ordered by their Stack Rank field rather than the order links happen to appear
+    /// in the relations array, since the relations array reflects link-creation order, not backlog order.
+    /// </summary>
+    [Fact]
+    public async Task LoadTreeAsync_OrdersChildrenByStackRankInsteadOfRelationOrder()
+    {
+        var client = new FakeAzureDevOpsClient();
+
+        // Relations array lists 4 before 2 and 3, but Stack Rank says the backlog order is 2, 3, 4.
+        client.WorkItems[1] = WorkItemJsonFactory.Create(1, "Epic", "Root", [4, 2, 3]);
+        client.WorkItems[2] = WorkItemJsonFactory.Create(
+            2, "Feature", "Feature A", configureFields: fields => fields["Microsoft.VSTS.Common.StackRank"] = 100.0);
+        client.WorkItems[3] = WorkItemJsonFactory.Create(
+            3, "Feature", "Feature B", configureFields: fields => fields["Microsoft.VSTS.Common.StackRank"] = 200.0);
+        client.WorkItems[4] = WorkItemJsonFactory.Create(
+            4, "Feature", "Feature C", configureFields: fields => fields["Microsoft.VSTS.Common.StackRank"] = 300.0);
+
+        var cloner = new WorkItemTreeCloner(client, _defaultOptions);
+        WorkItemNode tree = await cloner.LoadTreeAsync(1, TestContext.Current.CancellationToken);
+
+        Assert.Collection(
+            tree.Children,
+            child => Assert.Equal(2, child.Id),
+            child => Assert.Equal(3, child.Id),
+            child => Assert.Equal(4, child.Id));
+    }
+
+    /// <summary>
     /// Verifies non Parent/Child relations (such as Related) are ignored when building the hierarchy.
     /// </summary>
     [Fact]

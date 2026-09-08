@@ -13,7 +13,6 @@
     <File Path="SECURITY.md" />
   </Folder>
   <Folder Name="/.solution/">
-    <File Path=".env.example" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
     <File Path="global.json" />
