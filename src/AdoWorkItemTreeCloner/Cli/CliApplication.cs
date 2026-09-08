@@ -249,14 +249,14 @@ internal static class CliApplication
             commandLineOptions.CopyAttachments,
             commandLineOptions.SuppressNotifications);
 
+        using var client = new AzureDevOpsClient(
+            new AzureDevOpsClientOptions(
+                commandLineOptions.Organization,
+                commandLineOptions.Project,
+                commandLineOptions.PersonalAccessToken));
+
         try
         {
-            using var client = new AzureDevOpsClient(
-                new AzureDevOpsClientOptions(
-                    commandLineOptions.Organization,
-                    commandLineOptions.Project,
-                    commandLineOptions.PersonalAccessToken));
-
             var cloner = new WorkItemTreeCloner(client, cloneOptions);
 
             WorkItemNode sourceRoot = await AnsiConsole.Status()
@@ -283,6 +283,19 @@ internal static class CliApplication
             ConsoleRenderer.RenderResult(result, commandLineOptions.Organization, commandLineOptions.Project);
             return 0;
         }
+        catch (CloneAbortedException abortedException)
+        {
+            var isCancellation = abortedException.InnerException is OperationCanceledException;
+
+            AnsiConsole.MarkupLine(
+                isCancellation
+                    ? "[yellow]Operation canceled. Reverting created work items...[/]"
+                    : $"[red]Clone failed:[/] {Markup.Escape(abortedException.InnerException?.Message ?? abortedException.Message)}. Reverting created work items...");
+
+            await RevertCreatedWorkItemsAsync(client, abortedException.PartialResult);
+
+            return isCancellation ? 130 : 1;
+        }
         catch (OperationCanceledException)
         {
             AnsiConsole.MarkupLine("[yellow]Operation canceled.[/]");
@@ -299,6 +312,44 @@ internal static class CliApplication
             AnsiConsole.MarkupLine(
                 $"[red]Unexpected error:[/] {Markup.Escape(exception.Message)}");
             return 1;
+        }
+    }
+
+    /// <summary>
+    /// Deletes work items that were already created before a clone was aborted, reporting how many were
+    /// successfully reverted and which ones require manual cleanup.
+    /// </summary>
+    private static async Task RevertCreatedWorkItemsAsync(AzureDevOpsClient client, CloneResult partialResult)
+    {
+        var deletedCount = 0;
+        List<int> failedIds = [];
+
+        // Delete highest IDs first: children are typically created after their parents, so this avoids
+        // relying on Azure DevOps to allow deleting a parent before its (still-linked) child.
+        foreach (var newId in partialResult.IdMap.Values.OrderDescending())
+        {
+            try
+            {
+                // Cleanup must proceed even if the original operation was canceled.
+                await client.DeleteWorkItemAsync(newId, CancellationToken.None).ConfigureAwait(false);
+                deletedCount++;
+            }
+            catch (AzureDevOpsException)
+            {
+                failedIds.Add(newId);
+            }
+        }
+
+        if (deletedCount > 0)
+        {
+            AnsiConsole.MarkupLine($"[yellow]Reverted: deleted {deletedCount} newly created work item(s).[/]");
+        }
+
+        if (failedIds.Count > 0)
+        {
+            AnsiConsole.MarkupLine(
+                $"[red]Failed to delete {failedIds.Count} work item(s): " +
+                $"{string.Join(", ", failedIds)}. Manual cleanup required.[/]");
         }
     }
 }

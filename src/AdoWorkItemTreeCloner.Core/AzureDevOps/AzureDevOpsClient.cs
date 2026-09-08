@@ -335,6 +335,21 @@ public sealed class AzureDevOpsClient : IAzureDevOpsClient, IDisposable
     }
 
     /// <inheritdoc />
+    public async Task DeleteWorkItemAsync(int id, CancellationToken cancellationToken)
+    {
+        ValidateWorkItemId(id, nameof(id));
+
+        var relativeUri = $"_apis/wit/workitems/{id}?api-version={ApiVersion}";
+
+        _ = await SendForJsonAsync(
+                HttpMethod.Delete,
+                new Uri(_projectBaseUri, relativeUri),
+                body: null,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public void Dispose()
     {
         _httpClient.Dispose();

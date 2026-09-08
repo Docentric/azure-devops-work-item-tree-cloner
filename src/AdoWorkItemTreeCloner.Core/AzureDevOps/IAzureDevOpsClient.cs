@@ -105,4 +105,12 @@ public interface IAzureDevOpsClient
         string? comment,
         bool suppressNotifications,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Deletes a work item, used to revert clone operations that failed or were canceled partway through.
+    /// </summary>
+    /// <param name="id">ID of the work item to delete.</param>
+    /// <param name="cancellationToken">Token used to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous delete.</returns>
+    Task DeleteWorkItemAsync(int id, CancellationToken cancellationToken);
 }

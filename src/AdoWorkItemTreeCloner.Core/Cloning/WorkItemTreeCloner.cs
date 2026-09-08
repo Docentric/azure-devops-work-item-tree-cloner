@@ -59,6 +59,10 @@ public sealed class WorkItemTreeCloner
     /// </param>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
     /// <returns>Mapping and relation statistics for the cloned hierarchy.</returns>
+    /// <exception cref="CloneAbortedException">
+    /// The clone failed or was canceled partway through. The exception carries the partial
+    /// <see cref="CloneResult"/> so the caller can revert any work items already created.
+    /// </exception>
     public async Task<CloneResult> CloneAsync(
         WorkItemNode sourceRoot,
         int? newParentId,
@@ -67,28 +71,36 @@ public sealed class WorkItemTreeCloner
         ArgumentNullException.ThrowIfNull(sourceRoot);
 
         var result = new CloneResult();
-        result.RootNewId = await CloneNodeAsync(
-                sourceRoot,
-                parentNewId: null,
-                isRoot: true,
-                result,
-                cancellationToken)
-            .ConfigureAwait(false);
 
-        if (newParentId.HasValue)
+        try
         {
-            await _client.AddParentRelationAsync(
-                    result.RootNewId,
-                    newParentId.Value,
-                    _options.SuppressNotifications,
+            result.RootNewId = await CloneNodeAsync(
+                    sourceRoot,
+                    parentNewId: null,
+                    isRoot: true,
+                    result,
                     cancellationToken)
                 .ConfigureAwait(false);
-            result.RelationCount++;
+
+            if (newParentId.HasValue)
+            {
+                await _client.AddParentRelationAsync(
+                        result.RootNewId,
+                        newParentId.Value,
+                        _options.SuppressNotifications,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                result.RelationCount++;
+            }
+
+            await RecreateOtherRelationsAsync(sourceRoot, result, cancellationToken).ConfigureAwait(false);
+
+            return result;
         }
-
-        await RecreateOtherRelationsAsync(sourceRoot, result, cancellationToken).ConfigureAwait(false);
-
-        return result;
+        catch (Exception exception) when (result.IdMap.Count > 0)
+        {
+            throw new CloneAbortedException(exception, result);
+        }
     }
 
     /// <summary>

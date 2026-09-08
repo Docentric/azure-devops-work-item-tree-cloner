@@ -22,6 +22,8 @@ internal sealed class FakeAzureDevOpsClient : IAzureDevOpsClient
 
     public List<RelationCall> RelationCalls { get; } = [];
 
+    public List<int> DeletedWorkItemIds { get; } = [];
+
     public Task<JsonObject> GetWorkItemAsync(int id, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -111,6 +113,13 @@ internal sealed class FakeAzureDevOpsClient : IAzureDevOpsClient
         cancellationToken.ThrowIfCancellationRequested();
         RelationCalls.Add(
             new RelationCall(workItemId, relationType, targetWorkItemId, targetUrl, comment, name, suppressNotifications));
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteWorkItemAsync(int id, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        DeletedWorkItemIds.Add(id);
         return Task.CompletedTask;
     }
 
