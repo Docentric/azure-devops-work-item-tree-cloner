@@ -48,6 +48,12 @@ Use `--copy-assigned-to` to copy it.
 
 When Azure DevOps returns an identity object, the cloner normalizes it to its `uniqueName` value when available.
 
+## Attachments
+
+Copied by default: each attachment on a source work item is downloaded and re-uploaded, then linked to the corresponding cloned work item via an `AttachedFile` relation.
+
+Use `--no-copy-attachments` to skip attachments entirely.
+
 ## Excluded fields
 
 The application excludes known lifecycle/server fields, including:

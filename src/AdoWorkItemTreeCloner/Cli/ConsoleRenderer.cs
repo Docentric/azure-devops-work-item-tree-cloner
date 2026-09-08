@@ -39,6 +39,7 @@ internal static class ConsoleRenderer
         table.AddRow("Copy area path", FormatBool(options.CopyAreaPath));
         table.AddRow("Copy iteration path", FormatBool(options.CopyIterationPath));
         table.AddRow("Copy assigned to", FormatBool(options.CopyAssignedTo));
+        table.AddRow("Copy attachments", FormatBool(options.CopyAttachments));
         table.AddRow("Suppress notifications", FormatBool(options.SuppressNotifications));
         table.AddRow(
             "New parent work item",
@@ -76,6 +77,7 @@ internal static class ConsoleRenderer
         AnsiConsole.MarkupLine($"New root work item: [cyan]{result.RootNewId}[/]");
         AnsiConsole.MarkupLine($"Work items cloned: [cyan]{result.IdMap.Count}[/]");
         AnsiConsole.MarkupLine($"Parent/Child links created: [cyan]{result.RelationCount}[/]");
+        AnsiConsole.MarkupLine($"Attachments copied: [cyan]{result.AttachmentCount}[/]");
 
         Table table = new Table()
             .Border(TableBorder.Rounded)

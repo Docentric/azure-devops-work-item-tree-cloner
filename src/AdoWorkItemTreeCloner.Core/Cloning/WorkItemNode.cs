@@ -33,6 +33,11 @@ public sealed class WorkItemNode
     public List<WorkItemNode> Children { get; } = [];
 
     /// <summary>
+    /// Gets the source work item's attachments.
+    /// </summary>
+    public List<WorkItemAttachment> Attachments { get; } = [];
+
+    /// <summary>
     /// Counts this node and all descendants.
     /// </summary>
     /// <returns>The number of nodes in this subtree, including this node.</returns>

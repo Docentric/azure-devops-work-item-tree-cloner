@@ -13,6 +13,7 @@ public sealed class WorkItemTreeClonerTests
         copyAreaPath: true,
         copyIterationPath: false,
         copyAssignedTo: false,
+        copyAttachments: false,
         suppressNotifications: true);
 
     /// <summary>
@@ -68,6 +69,36 @@ public sealed class WorkItemTreeClonerTests
 
         WorkItemNode child = Assert.Single(tree.Children);
         Assert.Equal(2, child.Id);
+    }
+
+    /// <summary>
+    /// Verifies AttachedFile relations are captured as attachments on the loaded node, since the cloner
+    /// needs the source URL and comment to recreate them on the clone.
+    /// </summary>
+    [Fact]
+    public async Task LoadTreeAsync_CapturesAttachmentRelations()
+    {
+        JsonObject root = WorkItemJsonFactory.Create(1, "Epic", "Root");
+        root["relations"]!.AsArray().Add(
+            new JsonObject
+            {
+                ["rel"] = "AttachedFile",
+                ["url"] = "https://dev.azure.com/example/_apis/wit/attachments/abc?fileName=notes.txt",
+                ["attributes"] = new JsonObject { ["name"] = "notes.txt", ["comment"] = "Design notes" }
+            });
+
+        var client = new FakeAzureDevOpsClient();
+        client.WorkItems[1] = root;
+
+        var cloner = new WorkItemTreeCloner(client, _defaultOptions);
+        WorkItemNode tree = await cloner.LoadTreeAsync(1, TestContext.Current.CancellationToken);
+
+        WorkItemAttachment attachment = Assert.Single(tree.Attachments);
+        Assert.Equal(
+            "https://dev.azure.com/example/_apis/wit/attachments/abc?fileName=notes.txt",
+            attachment.Url);
+        Assert.Equal("notes.txt", attachment.FileName);
+        Assert.Equal("Design notes", attachment.Comment);
     }
 
     /// <summary>
@@ -180,6 +211,81 @@ public sealed class WorkItemTreeClonerTests
         Assert.Equal(result.RootNewId, link.ChildId);
         Assert.Equal(42, link.ParentId);
         Assert.True(link.SuppressNotifications);
+    }
+
+    /// <summary>
+    /// Verifies attachments are downloaded from the source, re-uploaded, and linked to the cloned work item
+    /// when attachment copying is enabled.
+    /// </summary>
+    [Fact]
+    public async Task CloneAsync_CopiesAttachmentsWhenEnabled()
+    {
+        const string attachmentUrl = "https://dev.azure.com/example/_apis/wit/attachments/abc?fileName=notes.txt";
+        byte[] attachmentContent = [1, 2, 3];
+
+        JsonObject root = WorkItemJsonFactory.Create(1, "Epic", "Root");
+        root["relations"]!.AsArray().Add(
+            new JsonObject
+            {
+                ["rel"] = "AttachedFile",
+                ["url"] = attachmentUrl,
+                ["attributes"] = new JsonObject { ["name"] = "notes.txt", ["comment"] = "Design notes" }
+            });
+
+        var client = new FakeAzureDevOpsClient();
+        client.WorkItems[1] = root;
+        client.AttachmentContents[attachmentUrl] = attachmentContent;
+
+        var options = new CloneOptions(
+            titleSuffix: " - Copy",
+            copyAreaPath: true,
+            copyIterationPath: false,
+            copyAssignedTo: false,
+            copyAttachments: true,
+            suppressNotifications: true);
+
+        var cloner = new WorkItemTreeCloner(client, options);
+        WorkItemNode tree = await cloner.LoadTreeAsync(1, TestContext.Current.CancellationToken);
+        CloneResult result = await cloner.CloneAsync(tree, newParentId: null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, result.AttachmentCount);
+        FakeAzureDevOpsClient.UploadAttachmentCall upload = Assert.Single(client.UploadAttachmentCalls);
+        Assert.Equal("notes.txt", upload.FileName);
+        Assert.Equal(attachmentContent, upload.Content);
+
+        FakeAzureDevOpsClient.AttachmentRelationCall relation = Assert.Single(client.AttachmentRelationCalls);
+        Assert.Equal(result.RootNewId, relation.WorkItemId);
+        Assert.Equal(upload.Url, relation.AttachmentUrl);
+        Assert.Equal("Design notes", relation.Comment);
+    }
+
+    /// <summary>
+    /// Verifies attachments are neither downloaded nor uploaded when attachment copying is disabled.
+    /// </summary>
+    [Fact]
+    public async Task CloneAsync_SkipsAttachmentsWhenDisabled()
+    {
+        const string attachmentUrl = "https://dev.azure.com/example/_apis/wit/attachments/abc?fileName=notes.txt";
+
+        JsonObject root = WorkItemJsonFactory.Create(1, "Epic", "Root");
+        root["relations"]!.AsArray().Add(
+            new JsonObject
+            {
+                ["rel"] = "AttachedFile",
+                ["url"] = attachmentUrl
+            });
+
+        var client = new FakeAzureDevOpsClient();
+        client.WorkItems[1] = root;
+        client.AttachmentContents[attachmentUrl] = [1, 2, 3];
+
+        var cloner = new WorkItemTreeCloner(client, _defaultOptions);
+        WorkItemNode tree = await cloner.LoadTreeAsync(1, TestContext.Current.CancellationToken);
+        CloneResult result = await cloner.CloneAsync(tree, newParentId: null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(0, result.AttachmentCount);
+        Assert.Empty(client.UploadAttachmentCalls);
+        Assert.Empty(client.AttachmentRelationCalls);
     }
 
     private static T GetFieldValue<T>(

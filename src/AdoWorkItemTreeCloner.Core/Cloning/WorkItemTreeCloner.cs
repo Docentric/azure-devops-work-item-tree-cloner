@@ -11,6 +11,7 @@ namespace AdoWorkItemTreeCloner.Core.Cloning;
 public sealed class WorkItemTreeCloner
 {
     private const string ChildRelation = "System.LinkTypes.Hierarchy-Forward";
+    private const string AttachmentRelation = "AttachedFile";
 
     private readonly IAzureDevOpsClient _client;
     private readonly CloneOptions _options;
@@ -158,11 +159,28 @@ public sealed class WorkItemTreeCloner
 
             foreach (JsonNode? relationNode in relations)
             {
-                if (relationNode is not JsonObject relation ||
-                    !string.Equals(
-                        relation["rel"]?.GetValue<string>(),
-                        ChildRelation,
-                        StringComparison.Ordinal))
+                if (relationNode is not JsonObject relation)
+                {
+                    continue;
+                }
+
+                var rel = relation["rel"]?.GetValue<string>();
+
+                if (string.Equals(rel, AttachmentRelation, StringComparison.Ordinal))
+                {
+                    var attachmentUrl = relation["url"]?.GetValue<string>();
+                    if (!string.IsNullOrWhiteSpace(attachmentUrl))
+                    {
+                        JsonObject? attributes = relation["attributes"]?.AsObject();
+                        var fileName = attributes?["name"]?.GetValue<string>();
+                        var comment = attributes?["comment"]?.GetValue<string>();
+                        node.Attachments.Add(new WorkItemAttachment(attachmentUrl, fileName, comment));
+                    }
+
+                    continue;
+                }
+
+                if (!string.Equals(rel, ChildRelation, StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -214,6 +232,15 @@ public sealed class WorkItemTreeCloner
             result.RelationCount++;
         }
 
+        if (_options.CopyAttachments)
+        {
+            foreach (WorkItemAttachment attachment in source.Attachments)
+            {
+                await CloneAttachmentAsync(newId, attachment, result, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+        }
+
         foreach (WorkItemNode child in source.Children)
         {
             _ = await CloneNodeAsync(
@@ -226,5 +253,54 @@ public sealed class WorkItemTreeCloner
         }
 
         return newId;
+    }
+
+    private async Task CloneAttachmentAsync(
+        int newWorkItemId,
+        WorkItemAttachment attachment,
+        CloneResult result,
+        CancellationToken cancellationToken)
+    {
+        if (!Uri.TryCreate(attachment.Url, UriKind.Absolute, out Uri? attachmentUri))
+        {
+            return;
+        }
+
+        byte[] content = await _client.DownloadAttachmentAsync(attachmentUri, cancellationToken)
+            .ConfigureAwait(false);
+
+        var fileName = string.IsNullOrWhiteSpace(attachment.FileName)
+            ? GetAttachmentFileName(attachment.Url)
+            : attachment.FileName;
+        var newAttachmentUrl = await _client.UploadAttachmentAsync(fileName, content, cancellationToken)
+            .ConfigureAwait(false);
+
+        await _client.AddAttachmentRelationAsync(
+                newWorkItemId,
+                newAttachmentUrl,
+                attachment.Comment,
+                _options.SuppressNotifications,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        result.AttachmentCount++;
+    }
+
+    private static string GetAttachmentFileName(string url)
+    {
+        if (Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
+        {
+            foreach (var pair in uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var parts = pair.Split('=', 2);
+                if (parts.Length == 2 &&
+                    string.Equals(parts[0], "fileName", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Uri.UnescapeDataString(parts[1]);
+                }
+            }
+        }
+
+        return "attachment";
     }
 }

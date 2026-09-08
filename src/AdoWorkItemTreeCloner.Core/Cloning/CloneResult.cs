@@ -18,6 +18,11 @@ public sealed class CloneResult
     public int RelationCount { get; internal set; }
 
     /// <summary>
+    /// Gets the number of attachments copied.
+    /// </summary>
+    public int AttachmentCount { get; internal set; }
+
+    /// <summary>
     /// Gets the new root work item ID.
     /// </summary>
     public int RootNewId { get; internal set; }

@@ -14,6 +14,12 @@ internal sealed class FakeAzureDevOpsClient : IAzureDevOpsClient
 
     public List<ParentLinkCall> ParentLinkCalls { get; } = [];
 
+    public Dictionary<string, byte[]> AttachmentContents { get; } = [];
+
+    public List<UploadAttachmentCall> UploadAttachmentCalls { get; } = [];
+
+    public List<AttachmentRelationCall> AttachmentRelationCalls { get; } = [];
+
     public Task<JsonObject> GetWorkItemAsync(int id, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -56,6 +62,40 @@ internal sealed class FakeAzureDevOpsClient : IAzureDevOpsClient
         return Task.CompletedTask;
     }
 
+    public Task<byte[]> DownloadAttachmentAsync(Uri attachmentUrl, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!AttachmentContents.TryGetValue(attachmentUrl.AbsoluteUri, out var content))
+        {
+            throw new InvalidOperationException(
+                $"Attachment {attachmentUrl} is not configured in the fake client.");
+        }
+
+        return Task.FromResult(content);
+    }
+
+    public Task<string> UploadAttachmentAsync(string fileName, byte[] content, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var url = $"https://fake.example/_apis/wit/attachments/{Guid.NewGuid()}?fileName={fileName}";
+        UploadAttachmentCalls.Add(new UploadAttachmentCall(fileName, content, url));
+        return Task.FromResult(url);
+    }
+
+    public Task AddAttachmentRelationAsync(
+        int workItemId,
+        string attachmentUrl,
+        string? comment,
+        bool suppressNotifications,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        AttachmentRelationCalls.Add(
+            new AttachmentRelationCall(workItemId, attachmentUrl, comment, suppressNotifications));
+        return Task.CompletedTask;
+    }
+
     internal sealed class CreateCall
     {
         public CreateCall(
@@ -91,6 +131,41 @@ internal sealed class FakeAzureDevOpsClient : IAzureDevOpsClient
         public int ChildId { get; }
 
         public int ParentId { get; }
+
+        public bool SuppressNotifications { get; }
+    }
+
+    internal sealed class UploadAttachmentCall
+    {
+        public UploadAttachmentCall(string fileName, byte[] content, string url)
+        {
+            FileName = fileName;
+            Content = content;
+            Url = url;
+        }
+
+        public string FileName { get; }
+
+        public byte[] Content { get; }
+
+        public string Url { get; }
+    }
+
+    internal sealed class AttachmentRelationCall
+    {
+        public AttachmentRelationCall(int workItemId, string attachmentUrl, string? comment, bool suppressNotifications)
+        {
+            WorkItemId = workItemId;
+            AttachmentUrl = attachmentUrl;
+            Comment = comment;
+            SuppressNotifications = suppressNotifications;
+        }
+
+        public int WorkItemId { get; }
+
+        public string AttachmentUrl { get; }
+
+        public string? Comment { get; }
 
         public bool SuppressNotifications { get; }
     }

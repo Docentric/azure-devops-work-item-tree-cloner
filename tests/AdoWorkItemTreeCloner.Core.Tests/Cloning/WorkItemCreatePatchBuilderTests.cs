@@ -55,6 +55,7 @@ public sealed class WorkItemCreatePatchBuilderTests
             copyAreaPath: false,
             copyIterationPath: true,
             copyAssignedTo: true,
+            copyAttachments: false,
             suppressNotifications: true);
 
         IReadOnlyList<JsonObject> operations = WorkItemCreatePatchBuilder.Build(node, isRoot: false, options);
@@ -109,6 +110,7 @@ public sealed class WorkItemCreatePatchBuilderTests
             copyAreaPath: true,
             copyIterationPath: false,
             copyAssignedTo: false,
+            copyAttachments: false,
             suppressNotifications: true);
 
     private static T GetFieldValue<T>(

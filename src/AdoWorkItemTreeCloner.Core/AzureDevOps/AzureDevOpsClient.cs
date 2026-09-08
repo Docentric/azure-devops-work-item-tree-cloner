@@ -145,6 +145,114 @@ public sealed class AzureDevOpsClient : IAzureDevOpsClient, IDisposable
     }
 
     /// <inheritdoc />
+    public async Task<byte[]> DownloadAttachmentAsync(Uri attachmentUrl, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(attachmentUrl);
+
+        using HttpResponseMessage response = await _httpClient.GetAsync(attachmentUrl, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken)
+                .ConfigureAwait(false);
+            var errorMessage = TryGetErrorMessage(errorContent) ?? errorContent;
+            throw new AzureDevOpsException(
+                $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorMessage}".Trim());
+        }
+
+        return await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<string> UploadAttachmentAsync(
+        string fileName,
+        byte[] content,
+        CancellationToken cancellationToken)
+    {
+        ValidateRequiredValue(fileName, nameof(fileName));
+        ArgumentNullException.ThrowIfNull(content);
+
+        var relativeUri =
+            $"_apis/wit/attachments?fileName={Uri.EscapeDataString(fileName)}&api-version={ApiVersion}";
+
+        using var byteContent = new ByteArrayContent(content);
+        byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, new Uri(_projectBaseUri, relativeUri))
+        {
+            Content = byteContent
+        };
+
+        using HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken)
+            .ConfigureAwait(false);
+
+        var responseContent = await response.Content.ReadAsStringAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorMessage = TryGetErrorMessage(responseContent) ?? responseContent;
+            throw new AzureDevOpsException(
+                $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorMessage}".Trim());
+        }
+
+        JsonObject json = JsonNode.Parse(responseContent)?.AsObject()
+            ?? throw new AzureDevOpsException("Azure DevOps returned an invalid JSON response.");
+
+        return json["url"]?.GetValue<string>()
+            ?? throw new AzureDevOpsException(
+                "Azure DevOps did not return a URL for the uploaded attachment.");
+    }
+
+    /// <inheritdoc />
+    public async Task AddAttachmentRelationAsync(
+        int workItemId,
+        string attachmentUrl,
+        string? comment,
+        bool suppressNotifications,
+        CancellationToken cancellationToken)
+    {
+        ValidateWorkItemId(workItemId, nameof(workItemId));
+        ValidateRequiredValue(attachmentUrl, nameof(attachmentUrl));
+
+        JsonObject relation = new()
+        {
+            ["rel"] = "AttachedFile",
+            ["url"] = attachmentUrl
+        };
+
+        if (!string.IsNullOrWhiteSpace(comment))
+        {
+            relation["attributes"] = new JsonObject
+            {
+                ["comment"] = comment
+            };
+        }
+
+        JsonArray patch =
+        [
+            new JsonObject
+            {
+                ["op"] = "add",
+                ["path"] = "/relations/-",
+                ["value"] = relation
+            }
+        ];
+
+        var notificationValue = suppressNotifications ? "true" : "false";
+        var relativeUri =
+            $"_apis/wit/workitems/{workItemId}?suppressNotifications={notificationValue}&api-version={ApiVersion}";
+
+        _ = await SendForJsonAsync(
+                HttpMethod.Patch,
+                new Uri(_projectBaseUri, relativeUri),
+                patch,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public void Dispose()
     {
         _httpClient.Dispose();

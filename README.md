@@ -182,6 +182,7 @@ When `--newparentid` is provided, a Parent/Child relation is created between the
 | `--reset-area-path` | Do not copy `System.AreaPath`. | Area Path copied |
 | `--copy-iteration-path` | Copy `System.IterationPath`. | `false` |
 | `--copy-assigned-to` | Copy `System.AssignedTo`. | `false` |
+| `--no-copy-attachments` | Do not copy attachments. | Attachments copied |
 | `--notify` | Allow Azure DevOps notifications for created/updated work items. | Notifications suppressed |
 | `--newparentid` | ID of an existing work item that becomes the parent of the newly created root work item. | No parent link created |
 

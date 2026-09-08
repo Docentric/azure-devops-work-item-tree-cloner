@@ -64,6 +64,11 @@ internal static class CliApplication
             Description = "Copy System.AssignedTo. By default, Assigned To is left empty/defaulted."
         };
 
+        Option<bool> resetAttachmentsOption = new("--no-copy-attachments")
+        {
+            Description = "Do not copy attachments. By default, attachments are copied."
+        };
+
         Option<bool> notifyOption = new("--notify")
         {
             Description = "Allow Azure DevOps notifications for created/updated work items. Notifications are suppressed by default."
@@ -86,6 +91,7 @@ internal static class CliApplication
             resetAreaPathOption,
             copyIterationPathOption,
             copyAssignedToOption,
+            resetAttachmentsOption,
             notifyOption,
             newParentIdOption
         };
@@ -103,6 +109,7 @@ internal static class CliApplication
                 resetAreaPathOption,
                 copyIterationPathOption,
                 copyAssignedToOption,
+                resetAttachmentsOption,
                 notifyOption,
                 newParentIdOption);
 
@@ -132,6 +139,7 @@ internal static class CliApplication
         Option<bool> resetAreaPathOption,
         Option<bool> copyIterationPathOption,
         Option<bool> copyAssignedToOption,
+        Option<bool> resetAttachmentsOption,
         Option<bool> notifyOption,
         Option<int?> newParentIdOption)
     {
@@ -208,6 +216,7 @@ internal static class CliApplication
             copyAreaPath: !parseResult.GetValue(resetAreaPathOption),
             copyIterationPath: parseResult.GetValue(copyIterationPathOption),
             copyAssignedTo: parseResult.GetValue(copyAssignedToOption),
+            copyAttachments: !parseResult.GetValue(resetAttachmentsOption),
             suppressNotifications: !parseResult.GetValue(notifyOption),
             newParentId: parseResult.GetValue(newParentIdOption));
     }
@@ -237,6 +246,7 @@ internal static class CliApplication
             commandLineOptions.CopyAreaPath,
             commandLineOptions.CopyIterationPath,
             commandLineOptions.CopyAssignedTo,
+            commandLineOptions.CopyAttachments,
             commandLineOptions.SuppressNotifications);
 
         try
