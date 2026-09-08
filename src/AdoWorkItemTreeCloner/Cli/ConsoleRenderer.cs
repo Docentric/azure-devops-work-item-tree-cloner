@@ -32,7 +32,7 @@ internal static class ConsoleRenderer
             .AddColumn("Value");
 
         table.AddRow("Organization", $"[cyan]{Markup.Escape(options.Organization)}[/]");
-        table.AddRow("Project", $"[cyan]{Markup.Escape(options.Project)}[/]");
+        table.AddRow("Project", $"[cyan][link={BuildProjectUrl(options.Organization, options.Project)}]{Markup.Escape(options.Project)}[/][/]");
         table.AddRow("Root work item", $"[cyan]{options.RootId}[/]");
         table.AddRow("Title suffix", $"[cyan]{Markup.Escape(options.TitleSuffix)}[/]");
         table.AddRow("Dry run", FormatBool(options.DryRun));
@@ -56,25 +56,26 @@ internal static class ConsoleRenderer
         AnsiConsole.WriteLine();
     }
 
-    public static void RenderTree(WorkItemNode root)
+    public static void RenderTree(WorkItemNode root, string organization, string project)
     {
         ArgumentNullException.ThrowIfNull(root);
 
         AnsiConsole.WriteLine();
         AnsiConsole.MarkupLine($"[bold]Source tree[/] [grey]({root.CountNodes()} work items)[/]");
 
-        var tree = new Tree(FormatNode(root));
-        AddChildren(tree, root.Children);
+        var tree = new Tree(FormatNode(root, organization, project));
+        AddChildren(tree, root.Children, organization, project);
         AnsiConsole.Write(tree);
     }
 
-    public static void RenderResult(CloneResult result)
+    public static void RenderResult(CloneResult result, string organization, string project)
     {
         ArgumentNullException.ThrowIfNull(result);
 
         AnsiConsole.WriteLine();
         AnsiConsole.MarkupLine("[green bold]Clone completed[/]");
-        AnsiConsole.MarkupLine($"New root work item: [cyan]{result.RootNewId}[/]");
+        AnsiConsole.MarkupLine(
+            $"New root work item: [cyan][link={BuildWorkItemUrl(organization, project, result.RootNewId)}]{result.RootNewId}[/][/]");
         AnsiConsole.MarkupLine($"Work items cloned: [cyan]{result.IdMap.Count}[/]");
         AnsiConsole.MarkupLine($"Parent/Child links created: [cyan]{result.RelationCount}[/]");
         AnsiConsole.MarkupLine($"Attachments copied: [cyan]{result.AttachmentCount}[/]");
@@ -88,26 +89,37 @@ internal static class ConsoleRenderer
         foreach (KeyValuePair<int, int> pair in result.IdMap)
         {
             table.AddRow(
-                pair.Key.ToString(CultureInfo.InvariantCulture),
-                pair.Value.ToString(CultureInfo.InvariantCulture));
+                $"[link={BuildWorkItemUrl(organization, project, pair.Key)}]{pair.Key.ToString(CultureInfo.InvariantCulture)}[/]",
+                $"[link={BuildWorkItemUrl(organization, project, pair.Value)}]{pair.Value.ToString(CultureInfo.InvariantCulture)}[/]");
         }
 
         AnsiConsole.WriteLine();
         AnsiConsole.Write(table);
     }
 
-    private static void AddChildren(IHasTreeNodes parent, IEnumerable<WorkItemNode> children)
+    private static void AddChildren(
+        IHasTreeNodes parent,
+        IEnumerable<WorkItemNode> children,
+        string organization,
+        string project)
     {
         foreach (WorkItemNode child in children)
         {
-            TreeNode treeNode = parent.AddNode(FormatNode(child));
-            AddChildren(treeNode, child.Children);
+            TreeNode treeNode = parent.AddNode(FormatNode(child, organization, project));
+            AddChildren(treeNode, child.Children, organization, project);
         }
     }
 
-    private static string FormatNode(WorkItemNode node) =>
-        $"[cyan]{node.Id}[/] [grey]({Markup.Escape(node.WorkItemType)})[/] {Markup.Escape(node.Title)}";
+    private static string FormatNode(WorkItemNode node, string organization, string project) =>
+        $"[cyan][link={BuildWorkItemUrl(organization, project, node.Id)}]{node.Id}[/][/] " +
+        $"[grey]({Markup.Escape(node.WorkItemType)})[/] {Markup.Escape(node.Title)}";
 
     private static string FormatBool(bool value) =>
         value ? "[green]yes[/]" : "[grey]no[/]";
+
+    private static string BuildProjectUrl(string organization, string project) =>
+        $"{organization.TrimEnd('/')}/{Uri.EscapeDataString(project)}";
+
+    private static string BuildWorkItemUrl(string organization, string project, int id) =>
+        $"{BuildProjectUrl(organization, project)}/_workitems/edit/{id.ToString(CultureInfo.InvariantCulture)}";
 }

@@ -265,7 +265,7 @@ internal static class CliApplication
                     "Reading work item tree...",
                     _ => cloner.LoadTreeAsync(commandLineOptions.RootId, cancellationToken));
 
-            ConsoleRenderer.RenderTree(sourceRoot);
+            ConsoleRenderer.RenderTree(sourceRoot, commandLineOptions.Organization, commandLineOptions.Project);
 
             if (commandLineOptions.DryRun)
             {
@@ -280,7 +280,7 @@ internal static class CliApplication
                     "Cloning work item tree...",
                     _ => cloner.CloneAsync(sourceRoot, commandLineOptions.NewParentId, cancellationToken));
 
-            ConsoleRenderer.RenderResult(result);
+            ConsoleRenderer.RenderResult(result, commandLineOptions.Organization, commandLineOptions.Project);
             return 0;
         }
         catch (OperationCanceledException)
