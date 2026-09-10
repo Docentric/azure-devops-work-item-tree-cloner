@@ -33,7 +33,8 @@ jobs:
 
       - name: Test
         run: >
-          dotnet test AdoWorkItemTreeCloner.slnx --no-build --configuration Release
+          dotnet test tests/AdoWorkItemTreeCloner.Core.Tests/AdoWorkItemTreeCloner.Core.Tests.csproj
+          --no-build --configuration Release
           --report-trx --results-directory ${{ github.workspace }}/TestResults
           --coverage --coverage-output-format cobertura --coverage-output-directory ${{ github.workspace }}/TestResults
 
