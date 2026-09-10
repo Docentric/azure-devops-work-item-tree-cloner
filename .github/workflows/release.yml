@@ -7,9 +7,68 @@ on:
 
 permissions:
   contents: write
+  checks: write
+  pull-requests: write
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore AdoWorkItemTreeCloner.slnx
+
+      - name: Build
+        run: dotnet build AdoWorkItemTreeCloner.slnx --no-restore --configuration Release
+
+      - name: Test
+        run: >
+          dotnet test AdoWorkItemTreeCloner.slnx --no-build --configuration Release
+          --report-trx --results-directory ${{ github.workspace }}/TestResults
+          --coverage --coverage-output-format cobertura --coverage-output-directory ${{ github.workspace }}/TestResults
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v2
+        if: always()
+        with:
+          name: Test Results
+          path: "TestResults/*.trx"
+          reporter: dotnet-trx
+          fail-on-error: false
+
+      - name: Publish coverage summary
+        if: always()
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: "TestResults/**/*.cobertura.xml"
+          badge: true
+          format: markdown
+          output: both
+
+      - name: Add coverage summary to job summary
+        if: always()
+        run: cat code-coverage-results.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload test and coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            TestResults/**
+            code-coverage-results.md
+
   build:
+    needs: test
     strategy:
       matrix:
         rid: [ win-x64, win-arm64, linux-x64, linux-arm64 ]
@@ -44,7 +103,7 @@ jobs:
           path: Ado.WorkItemTreeCloner-${{ matrix.rid }}.zip
 
   release:
-    needs: build
+    needs: [ test, build ]
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts

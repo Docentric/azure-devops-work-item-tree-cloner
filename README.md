@@ -1,6 +1,8 @@
 # Azure DevOps Work Item Tree Cloner
 
-`AdoWorkItemTreeCloner` is a small, production-oriented .NET 10 command-line application that recursively clones an Azure DevOps work item **Parent/Child tree** and rebuilds the hierarchy with the new work item IDs.
+[![CI](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/ci.yml/badge.svg)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/ci.yml)
+
+`AdoWorkItemTreeCloner`
 
 The repository is deliberately structured as a normal maintainable .NET codebase rather than a one-file script. It uses an SDK-style `.slnx` solution, C# 14, Central Package Management, nullable reference types, .NET analyzers, StyleCop, `.editorconfig`, xUnit v3 on Microsoft Testing Platform v2, code coverage, engineering build scripts, and an Azure DevOps YAML pipeline.
 
