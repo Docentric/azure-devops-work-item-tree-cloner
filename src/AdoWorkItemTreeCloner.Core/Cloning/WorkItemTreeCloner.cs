@@ -383,7 +383,7 @@ public sealed class WorkItemTreeCloner
             return;
         }
 
-        byte[] content = await _client.DownloadAttachmentAsync(attachmentUri, cancellationToken)
+        var content = await _client.DownloadAttachmentAsync(attachmentUri, cancellationToken)
             .ConfigureAwait(false);
 
         var fileName = string.IsNullOrWhiteSpace(attachment.FileName)

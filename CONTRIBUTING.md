@@ -40,4 +40,4 @@ dotnet test tests/AdoWorkItemTreeCloner.Core.Tests/AdoWorkItemTreeCloner.Core.Te
 
 ## Security
 
-Never commit PATs, Authorization headers, production Azure DevOps traces containing credentials, or `.env` files with secrets.
+Never commit PATs, Authorization headers, production Azure DevOps traces containing credentials.

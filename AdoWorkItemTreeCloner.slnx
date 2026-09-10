@@ -1,6 +1,7 @@
 <Solution>
-  <Folder Name="/.config/">
-    <File Path=".config/spelling.dic" />
+  <Folder Name="/.config/" />
+  <Folder Name="/.config/spelling/">
+    <File Path=".config/spelling/exclusion.dic" />
   </Folder>
   <Folder Name="/.git/">
     <File Path=".gitattributes" />
