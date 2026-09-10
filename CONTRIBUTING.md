@@ -14,6 +14,8 @@ or:
 ./eng/build.sh
 ```
 
+The script accepts `-Configuration` (`Debug`/`Release`, default `Release`), `-SkipFormat`, and `-SkipTests` switches.
+
 Manual equivalent:
 
 ```bash
@@ -23,7 +25,9 @@ dotnet build AdoWorkItemTreeCloner.slnx -c Release --no-restore
 dotnet test tests/AdoWorkItemTreeCloner.Core.Tests/AdoWorkItemTreeCloner.Core.Tests.csproj \
   -c Release \
   --no-build \
+  --results-directory artifacts/TestResults \
   --report-trx \
+  --report-trx-filename '{asm}_{tfm}_{arch}.trx' \
   --coverage \
   --coverage-output-format cobertura
 ```

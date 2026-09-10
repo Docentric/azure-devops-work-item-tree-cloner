@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Reflection;
 
 using AdoWorkItemTreeCloner.Core.Cloning;
+
 using Spectre.Console;
 
 namespace AdoWorkItemTreeCloner.Cli;

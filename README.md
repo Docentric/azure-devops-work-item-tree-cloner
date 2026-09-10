@@ -186,8 +186,6 @@ When `--newparentid` is provided, a Parent/Child relation is created between the
 | `--notify` | Allow Azure DevOps notifications for created/updated work items. | Notifications suppressed |
 | `--newparentid` | ID of an existing work item that becomes the parent of the newly created root work item. | No parent link created |
 
-| `--notify` | Allow normal Azure DevOps notifications. | Notifications suppressed |
-
 `System.CommandLine` also provides `--help` and `--version`.
 
 ## Field-copy behavior

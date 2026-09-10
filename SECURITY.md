@@ -18,7 +18,7 @@ The application does not intentionally print the PAT or Authorization header.
 
 ## Repository hygiene
 
-`.gitignore` excludes `.env` files. `.env.example` contains only a placeholder.
+The application does not read PAT values from `.env` files; the PAT must be supplied via the `AZURE_DEVOPS_PAT` environment variable or the `--pat` argument.
 
 Do not commit:
 
