@@ -1,4 +1,4 @@
-# AdoWorkItemTreeCloner
+# Azure DevOps Work Item Tree Cloner
 
 `AdoWorkItemTreeCloner` is a small, production-oriented .NET 10 command-line application that recursively clones an Azure DevOps work item **Parent/Child tree** and rebuilds the hierarchy with the new work item IDs.
 
@@ -211,14 +211,11 @@ See [Field-copy policy](docs/field-copy-policy.md).
 
 - Revision/history data.
 - Discussion/comments.
-- Attachments.
-- Hyperlinks.
-- Related/Predecessor/Successor relations.
-- Git/build/branch/pull-request artifact links.
 - State transition history.
-- Board ordering/rank values.
 
-The tool focuses on cloning the **complete recursive Parent/Child tree structure**.
+Attachments are copied by default (use `--no-copy-attachments` to skip them), and non-hierarchy relations (Related, Predecessor/Successor, Hyperlinks, Git/build/branch/pull-request artifact links, etc.) are preserved and remapped to cloned targets when applicable. Backlog ordering fields (Stack Rank, Backlog Priority) are also copied by default so children keep their relative order.
+
+The tool focuses on cloning the **complete recursive Parent/Child tree structure**, including its non-hierarchy relations and attachments.
 
 ## Build and quality gates
 
