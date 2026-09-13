@@ -5,7 +5,7 @@
 [![Coverage (CI)](https://raw.githubusercontent.com/Docentric/azure-devops-work-item-tree-cloner/badges/ci-coverage.svg)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/ci.yml)
 [![Coverage (Release)](https://raw.githubusercontent.com/Docentric/azure-devops-work-item-tree-cloner/badges/release-coverage.svg)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/release.yml)
 [![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
-[![License](https://img.shields.io/github/license/Docentric/azure-devops-work-item-tree-cloner)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/Docentric/azure-devops-work-item-tree-cloner)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/releases/latest)
 
 A command-line tool for cloning Azure DevOps work item trees (an epic/feature/backlog item/task hierarchy) into new,
@@ -68,15 +68,16 @@ Package versions are centralized in `Directory.Packages.props`.
 
 ```text
 .
-├── .azuredevops/
-│   └── pull_request_template.md
+├── .github/
+│   └── workflows/
+│       ├── ci.yml
+│       └── release.yml
 ├── AdoWorkItemTreeCloner.slnx
 ├── Directory.Build.props
 ├── Directory.Packages.props
 ├── global.json
 ├── .editorconfig
 ├── stylecop.json
-├── azure-pipelines.yml
 ├── src/
 │   ├── AdoWorkItemTreeCloner/
 │   │   ├── Cli/
@@ -290,20 +291,17 @@ They cover:
 
 See [Testing](docs/testing.md).
 
-## Azure DevOps pipeline
+## GitHub Actions CI
 
-`azure-pipelines.yml`:
+`.github/workflows/ci.yml`:
 
-1. Installs the SDK from `global.json`.
-2. Caches NuGet packages.
-3. Restores dependencies.
-4. Verifies formatting.
-5. Builds Release.
-6. Runs tests on Microsoft Testing Platform v2.
-7. Publishes TRX results.
-8. Publishes Cobertura code coverage.
-9. Publishes the CLI.
-10. Creates a ZIP build artifact.
+1. Installs the .NET SDK.
+2. Restores dependencies.
+3. Builds Release.
+4. Runs tests on Microsoft Testing Platform v2.
+5. Publishes TRX test results.
+6. Publishes Cobertura code coverage and a coverage summary/badge.
+7. Uploads test and coverage artifacts.
 
 No PAT is required by CI because the included tests are isolated unit tests.
 

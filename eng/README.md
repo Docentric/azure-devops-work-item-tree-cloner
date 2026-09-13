@@ -19,4 +19,4 @@ Optional parameters:
 ./eng/build.sh Debug
 ```
 
-Both scripts run the same core quality gates as the Azure DevOps pipeline: restore, formatting verification, build, and tests.
+Both scripts run the same core quality gates as the GitHub Actions CI workflow: restore, formatting verification, build, and tests.
