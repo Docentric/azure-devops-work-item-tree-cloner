@@ -61,10 +61,17 @@ jobs:
 
       - name: Prepare coverage badge
         if: always()
-        run: mkdir -p badge && cp badge.svg badge/ci-coverage.svg
+        run: |
+          mkdir -p badge
+          badge_url=$(grep -oE 'https://img\.shields\.io/badge/[^)]+' code-coverage-results.md | head -n 1)
+          if [ -n "$badge_url" ]; then
+            curl -sSL "$badge_url" -o badge/ci-coverage.svg
+          else
+            echo "::warning::No shields.io badge URL found in code-coverage-results.md; skipping badge update."
+          fi
 
       - name: Publish coverage badge
-        if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && hashFiles('badge/ci-coverage.svg') != ''
         uses: JamesIves/github-pages-deploy-action@v4.9.0
         with:
           branch: badges
