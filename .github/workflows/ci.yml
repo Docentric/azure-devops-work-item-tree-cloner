@@ -2,12 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [ "**" ]
+    branches: [ "main", "develop" ]
   pull_request:
-    branches: [ "**" ]
+    branches: [ "main", "develop" ]
 
 permissions:
-  contents: read
+  contents: write
   checks: write
   pull-requests: write
 
@@ -18,10 +18,10 @@ jobs:
       CI: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
 
@@ -38,7 +38,7 @@ jobs:
           --coverage --coverage-output-format cobertura
 
       - name: Publish test results
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         if: always()
         with:
           name: Test Results
@@ -59,9 +59,21 @@ jobs:
         if: always()
         run: cat code-coverage-results.md >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Prepare coverage badge
+        if: always()
+        run: mkdir -p badge && cp badge.svg badge/ci-coverage.svg
+
+      - name: Publish coverage badge
+        if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        uses: JamesIves/github-pages-deploy-action@v4.9.0
+        with:
+          branch: badges
+          folder: badge
+          clean: false
+
       - name: Upload test and coverage artifacts
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: test-results
           path: |

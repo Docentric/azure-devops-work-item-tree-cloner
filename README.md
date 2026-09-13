@@ -1,10 +1,22 @@
 # Azure DevOps Work Item Tree Cloner
 
 [![CI](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/ci.yml/badge.svg)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/ci.yml)
+[![Release](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/release.yml/badge.svg)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/release.yml)
+[![Coverage (CI)](https://raw.githubusercontent.com/Docentric/azure-devops-work-item-tree-cloner/badges/ci-coverage.svg)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/ci.yml)
+[![Coverage (Release)](https://raw.githubusercontent.com/Docentric/azure-devops-work-item-tree-cloner/badges/release-coverage.svg)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/release.yml)
+[![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![License](https://img.shields.io/github/license/Docentric/azure-devops-work-item-tree-cloner)](LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/Docentric/azure-devops-work-item-tree-cloner)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/releases/latest)
 
-`AdoWorkItemTreeCloner`
+A command-line tool for cloning Azure DevOps work item trees (an epic/feature/backlog item/task hierarchy) into new,
+independent copies while preserving the parent/child structure. It was originally built to speed up Docentric's own
+development workflow — cloning templates such as onboarding checklists and other repeating project structures — but
+it is generic enough for anyone who needs to duplicate a work item tree in Azure DevOps. In particular, the community
+is welcome to use it together with the
+[D365 Business Process Catalog](https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/dev-itpro/audit/business-processes/business-process-catalog)
+to clone standard process templates into new Azure DevOps projects.
 
-The repository is deliberately structured as a normal maintainable .NET codebase rather than a one-file script. It uses an SDK-style `.slnx` solution, C# 14, Central Package Management, nullable reference types, .NET analyzers, StyleCop, `.editorconfig`, xUnit v3 on Microsoft Testing Platform v2, code coverage, engineering build scripts, and an Azure DevOps YAML pipeline.
+The repository is deliberately structured
 
 ## What it clones
 
