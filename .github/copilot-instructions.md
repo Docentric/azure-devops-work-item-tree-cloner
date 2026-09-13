@@ -90,3 +90,7 @@ Keep commits short and scannable:
   ```
 
 - Do not combine unrelated changes into a single commit.
+
+## General Writing Guidelines
+
+- Avoid the use of em-dashes in written text and documentation.

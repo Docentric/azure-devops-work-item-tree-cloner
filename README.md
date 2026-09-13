@@ -10,13 +10,11 @@
 
 A command-line tool for cloning Azure DevOps work item trees (an epic/feature/backlog item/task hierarchy) into new,
 independent copies while preserving the parent/child structure. It was originally built to speed up Docentric's own
-development workflow — cloning templates such as onboarding checklists and other repeating project structures — but
+development workflow (cloning templates such as onboarding checklists and other repeating project structures), but
 it is generic enough for anyone who needs to duplicate a work item tree in Azure DevOps. In particular, the community
 is welcome to use it together with the
 [D365 Business Process Catalog](https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/dev-itpro/audit/business-processes/business-process-catalog)
 to clone standard process templates into new Azure DevOps projects.
-
-The repository is deliberately structured
 
 ## What it clones
 
