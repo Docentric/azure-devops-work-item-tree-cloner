@@ -1,12 +1,17 @@
 # Azure DevOps Work Item Tree Cloner
 
+CI/CD: 
 [![CI](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/ci.yml/badge.svg)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/ci.yml)
-[![Release](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/release.yml/badge.svg)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/release.yml)
 [![Coverage (CI)](https://raw.githubusercontent.com/Docentric/azure-devops-work-item-tree-cloner/badges/ci-coverage.svg)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/ci.yml)
+
+Release:
+[![Release](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/release.yml/badge.svg)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/release.yml)
 [![Coverage (Release)](https://raw.githubusercontent.com/Docentric/azure-devops-work-item-tree-cloner/badges/release-coverage.svg)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/actions/workflows/release.yml)
+[![GitHub release](https://img.shields.io/github/v/release/Docentric/azure-devops-work-item-tree-cloner)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/releases/latest)
+
+Framework and license:
 [![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![GitHub release](https://img.shields.io/github/v/release/Docentric/azure-devops-work-item-tree-cloner)](https://github.com/Docentric/azure-devops-work-item-tree-cloner/releases/latest)
 
 A command-line tool for cloning Azure DevOps work item trees (an epic/feature/backlog item/task hierarchy) into new,
 independent copies while preserving the parent/child structure. It was originally built to speed up Docentric's own
@@ -15,6 +20,8 @@ it is generic enough for anyone who needs to duplicate a work item tree in Azure
 is welcome to use it together with the
 [D365 Business Process Catalog](https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/dev-itpro/audit/business-processes/business-process-catalog)
 to clone standard process templates into new Azure DevOps projects.
+
+![Tool screenshot](docs/images/tool-usage.png)
 
 ## What it clones
 
